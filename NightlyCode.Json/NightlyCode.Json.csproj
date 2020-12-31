@@ -9,7 +9,7 @@
         <Authors>Toni Gottschall</Authors>
         <Description>Just a small json library</Description>
         <PackageProjectUrl>https://github.com/telmengedar/NighlyCode.Json</PackageProjectUrl>
-        <PackageLicenseUrl>https://unlicense.org</PackageLicenseUrl>
+        <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/telmengedar/NighlyCode.Json.git</RepositoryUrl>
     </PropertyGroup>
 

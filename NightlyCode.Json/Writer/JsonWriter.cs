@@ -67,6 +67,9 @@ namespace NightlyCode.Json.Writer {
 
             if (data.GetType().IsEnum)
                 data = Convert.ChangeType(data, Enum.GetUnderlyingType(data.GetType()));
+
+            if (data is TimeSpan span)
+                data = span.ToString("c", CultureInfo.InvariantCulture);
             
             switch (Type.GetTypeCode(data.GetType())) {
             case TypeCode.Boolean:

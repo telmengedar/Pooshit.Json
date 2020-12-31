@@ -55,6 +55,14 @@ namespace Json.Tests {
             Assert.AreEqual(12, result.Month);
             Assert.AreEqual(31, result.Day);
         }
+
+        [Test, Parallelizable]
+        public void ReadTimespan() {
+            TimeSpan result = NightlyCode.Json.Json.Read<TimeSpan>("\"04:34:22\"");
+            Assert.AreEqual(4, result.Hours);
+            Assert.AreEqual(34, result.Minutes);
+            Assert.AreEqual(22, result.Seconds);
+        }
         
         [Test, Parallelizable]
         public void ReadGuidProperty() {
