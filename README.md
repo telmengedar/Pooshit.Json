@@ -18,7 +18,7 @@ Json.Write(<data>,<stream>);
 
 ### Read Json to basic structures
 The following code reads a json string or json data in a stream and converts it to framework structures.
-Objects are read as **Dictionary<string,object>**, Arrays as **List<object>** and values as string, double, long, boolean or null.
+Objects are read as **Dictionary<string,object>**, Arrays as **List** and values as string, double, long, boolean or null.
 
 ```
 object data=Json.Read(<string|stream>)
