@@ -66,7 +66,7 @@ If you need the fastest library of them all you probably should look somewhere e
 
 ### But then it definitively is the smallest library out there?
 
-Probably not ... It was written to just contain the stuff needed to get the job done but again no specific steps where taken
+Probably not ... It was written to just contain the stuff needed to get the job done but again no specific steps were taken
 to minimize size.
 
 ### Then why bother
