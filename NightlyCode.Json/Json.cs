@@ -102,9 +102,29 @@ namespace NightlyCode.Json {
         /// <param name="data">data to write</param>
         /// <param name="target">stream to write json to</param>
         /// <param name="options">options used to modify json result</param>
+        public static void Write(object data, TextWriter target, JsonOptions options) {
+            new JsonWriter(options).Write(data, new DataWriter(target));
+        }
+
+        /// <summary>
+        /// writes data as json to a stream
+        /// </summary>
+        /// <param name="data">data to write</param>
+        /// <param name="target">stream to write json to</param>
+        /// <param name="options">options used to modify json result</param>
         public static Task WriteAsync(object data, Stream target, JsonOptions options) {
             using StreamWriter streamwriter = new StreamWriter(target);
             return new JsonWriter(options).WriteAsync(data, new DataWriter(streamwriter));
+        }
+
+        /// <summary>
+        /// writes data as json to a stream
+        /// </summary>
+        /// <param name="data">data to write</param>
+        /// <param name="target">stream to write json to</param>
+        /// <param name="options">options used to modify json result</param>
+        public static Task WriteAsync(object data, TextWriter target, JsonOptions options) {
+            return new JsonWriter(options).WriteAsync(data, new DataWriter(target));
         }
 
         /// <summary>

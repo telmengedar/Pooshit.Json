@@ -96,7 +96,7 @@ namespace NightlyCode.Json.Writer {
                 writer.WriteCharacter('"');
                 break;
             case TypeCode.DateTime:
-                string datestring = Convert.ToString(data, CultureInfo.InvariantCulture);
+                string datestring = ((DateTime) data).ToString("o", CultureInfo.InvariantCulture);
                 writer.WriteCharacter('"');
                 writer.WriteString(datestring);
                 writer.WriteCharacter('"');

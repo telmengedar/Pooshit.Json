@@ -22,6 +22,12 @@ namespace Json.Tests {
             Assert.AreEqual(expected, result);
         }
 
+        [Test, Parallelizable]
+        public void WriteDateTime() {
+            string result = NightlyCode.Json.Json.WriteString(new DateTime(2020, 12, 31));
+            Assert.AreEqual("\"2020-12-31T00:00:00.0000000\"", result);
+        }
+        
         [TestCase(1, "1")]
         [TestCase(8L, "8")]
         [TestCase(9.98, "9.98")]

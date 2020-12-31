@@ -44,10 +44,18 @@ namespace Json.Tests {
 
         [Test, Parallelizable]
         public async Task ReadGuidAsync() {
-            Guid guid = await NightlyCode.Json.Json.ReadAsync<Guid>(NightlyCode.Json.Json.WriteString(Guid.Empty));
+            Guid guid = await NightlyCode.Json.Json.ReadAsync<Guid>(await NightlyCode.Json.Json.WriteStringAsync(Guid.Empty));
             Assert.AreEqual(Guid.Empty, guid);
         }
 
+        [Test, Parallelizable]
+        public void ReadDateTime() {
+            DateTime result = NightlyCode.Json.Json.Read<DateTime>("\"2020-12-31T00:00:00.0000000\"");
+            Assert.AreEqual(2020, result.Year);
+            Assert.AreEqual(12, result.Month);
+            Assert.AreEqual(31, result.Day);
+        }
+        
         [Test, Parallelizable]
         public void ReadGuidProperty() {
             TestData testdata = NightlyCode.Json.Json.Read<TestData>("{\"guid\":\"00000000-0000-0000-0000-000000000000\"}");
