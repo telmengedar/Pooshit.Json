@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace NightlyCode.Json.Writer {
     
@@ -18,5 +19,18 @@ namespace NightlyCode.Json.Writer {
         /// </summary>
         /// <param name="data">string to write</param>
         void WriteString(string data);
+        
+        /// <summary>
+        /// writes a character
+        /// </summary>
+        /// <param name="character">character to write</param>
+        Task WriteCharacterAsync(char character);
+
+        /// <summary>
+        /// writes a string
+        /// </summary>
+        /// <param name="data">string to write</param>
+        Task WriteStringAsync(string data);
+
     }
 }

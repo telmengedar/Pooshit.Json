@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using NightlyCode.Json.Helpers;
 using NightlyCode.Json.Tokens;
 
@@ -20,7 +21,15 @@ namespace NightlyCode.Json.Reader {
             char state = eof;
             return Converter.Convert(Read(type, reader, ref state), type);
         }
-        
+
+        public async Task<object> ReadAsync(Type type, IDataReader reader) {
+            AsyncState state = new AsyncState {
+                State = eof
+            };
+
+            return Converter.Convert(await ReadAsync(type, reader, state), type);
+        }
+
         object Read(Type type, IDataReader reader, ref char state) {
             state = reader.ReadCharacter();
             while (char.IsWhiteSpace(state))
@@ -47,7 +56,34 @@ namespace NightlyCode.Json.Reader {
                 return ReadValue(state, type, reader, ref state);
             }
         }
-        
+
+        async Task<object> ReadAsync(Type type, IDataReader reader, AsyncState state) {
+            state.State = await reader.ReadCharacterAsync();
+            while (char.IsWhiteSpace(state.State))
+                state.State = await reader.ReadCharacterAsync();
+
+            if (state.State == eof)
+                return null;
+            
+            switch (state.State) {
+            case '{':
+                return await ReadObjectAsync(type, reader, state);
+            case '[':
+                if (type == typeof(object))
+                    return await ReadArrayAsync(typeof(object), reader, state);
+                if (!type.IsArray)
+                    throw new FormatException("Trying to read array value to non array result type");
+                return await ReadArrayAsync(type.GetElementType(), reader, state);
+            case '\"':
+                return await ReadStringAsync(reader, state);
+            case ']':
+            case '}':
+                return new NoData();
+            default:
+                return await ReadValueAsync(type, reader, state);
+            }
+        }
+
         object ReadObject(Type type, IDataReader reader, ref char state) {
             if (type == typeof(object) || type == typeof(IDictionary)) {
                 Dictionary<string, object> dictionary=new Dictionary<string, object>();
@@ -121,7 +157,81 @@ namespace NightlyCode.Json.Reader {
             state = '\0';
             return result;
         }
-        
+
+        async Task<object> ReadObjectAsync(Type type, IDataReader reader, AsyncState state) {
+            if (type == typeof(object) || type == typeof(IDictionary)) {
+                Dictionary<string, object> dictionary=new Dictionary<string, object>();
+
+                do {
+                    object key = await ReadAsync(typeof(string), reader, state);
+                    if (key is NoData)
+                        break;
+                    
+                    if (state.State != ':') {
+                        state.State=await reader.ReadCharacterAsync();
+                        while (char.IsWhiteSpace(state.State))
+                            state.State = await reader.ReadCharacterAsync();
+                    }
+
+                    if (state.State != ':')
+                        throw new FormatException("Missing ':' in json dictionary");
+
+                    object value = await ReadAsync(typeof(object), reader, state);
+
+                    dictionary[key.ToString()] = value;
+                    
+                    if (state.State != '}' && state.State != ',') {
+                        state.State=await reader.ReadCharacterAsync();
+                        while (char.IsWhiteSpace(state.State))
+                            state.State = await reader.ReadCharacterAsync();
+                    }
+
+                    if (state.State == ',' || state.State == '}')
+                        break;
+                } while (state.State != eof);
+
+                return dictionary;
+            }
+
+            object result = Activator.CreateInstance(type);
+            
+            do {
+                object key = await ReadAsync(typeof(string), reader, state);
+                if (key is NoData)
+                    break;
+                
+                if (state.State != ':') {
+                    state.State=await reader.ReadCharacterAsync();
+                    while (char.IsWhiteSpace(state.State))
+                        state.State = await reader.ReadCharacterAsync();
+                }
+
+                if (state.State != ':')
+                    throw new FormatException("Missing ':' in json dictionary");
+
+                PropertyInfo property = type.GetProperty(key.ToString(), BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (property == null) {
+                    // read value and skip property
+                    await ReadAsync(typeof(object), reader, state);
+                }
+                else{
+                    object value = await ReadAsync(property.PropertyType, reader, state);
+                    if (value != null && value.GetType() != property.PropertyType)
+                        value = Converter.Convert(value, property.PropertyType);
+                    property.SetValue(result, value);
+                }
+
+                if (state.State != '}' && state.State != ',') {
+                    state.State=await reader.ReadCharacterAsync();
+                    while (char.IsWhiteSpace(state.State))
+                        state.State = await reader.ReadCharacterAsync();
+                }
+            } while (state.State != eof && state.State!='}');
+
+            state.State = '\0';
+            return result;
+        }
+
         Array ReadArray(Type elementtype, IDataReader reader, ref char state) {
             List<object> items=new List<object>();
             do {
@@ -147,7 +257,33 @@ namespace NightlyCode.Json.Reader {
 
             return result;
         }
-        
+
+        async Task<Array> ReadArrayAsync(Type elementtype, IDataReader reader, AsyncState state) {
+            List<object> items=new List<object>();
+            do {
+                object item = await ReadAsync(elementtype, reader, state);
+                if (item is NoData)
+                    break;
+                
+                items.Add(item);
+                if (state.State != ',' && state.State != ']') {
+                    state.State = await reader.ReadCharacterAsync();
+                    while (char.IsWhiteSpace(state.State))
+                        state.State = await reader.ReadCharacterAsync();
+                }
+            } while (state.State != eof && state.State!=']');
+
+            Array result = Array.CreateInstance(elementtype, items.Count);
+            for (int i = 0; i < items.Count; ++i) {
+                object item = items[i];
+                if (item != null && item.GetType() != elementtype)
+                    item = Converter.Convert(item, elementtype);
+                result.SetValue(item, i);
+            }
+
+            return result;
+        }
+
         string ReadString(IDataReader reader, ref char state) {
             buffer.Length = 0;
             do {
@@ -190,7 +326,50 @@ namespace NightlyCode.Json.Reader {
 
             return buffer.ToString();
         }
-        
+
+        async Task<string> ReadStringAsync(IDataReader reader, AsyncState state) {
+            buffer.Length = 0;
+            do {
+                state.State = await reader.ReadCharacterAsync();
+                switch (state.State) {
+                case '"':
+                    break;
+                case '\\':
+                    state.State = await reader.ReadCharacterAsync();
+                    switch (state.State) {
+                    case eof:
+                        break;
+                    case 't':
+                        buffer.Append('\t');
+                        break;
+                    case 'r':
+                        buffer.Append('\r');
+                        break;
+                    case 'n':
+                        buffer.Append('\n');
+                        break;
+                    case 'u':
+                        reader.ReadCharacters(unicodebuffer);
+                        buffer.Append((char) int.Parse(new string(unicodebuffer), NumberStyles.HexNumber));
+                        break;
+                    case '\"':
+                        buffer.Append(state.State);
+                        state.State = '\\';
+                        break;
+                    default:
+                        buffer.Append(state.State);
+                        break;
+                    }
+                    break;
+                default:
+                    buffer.Append(state.State);
+                    break;
+                }
+            } while (state.State != eof && state.State != '"');
+
+            return buffer.ToString();
+        }
+
         object ReadValue(char firstcharacter, Type type, IDataReader reader, ref char state) {
             buffer.Length = 0;
             buffer.Append(firstcharacter);
@@ -214,5 +393,30 @@ namespace NightlyCode.Json.Reader {
                 _ => Converter.Convert(value, type)
             };
         }
+        
+        async Task<object> ReadValueAsync(Type type, IDataReader reader, AsyncState state) {
+            buffer.Length = 0;
+            buffer.Append(state.State);
+            
+            do {
+                state.State = await reader.ReadCharacterAsync();
+                if (char.IsWhiteSpace(state.State))
+                    continue;
+
+                if (state.State == '}' || state.State == ']' || state.State == ',' || state.State== eof)
+                    break;
+                
+                buffer.Append(state.State);
+            } while (state.State != eof);
+            
+            string value = buffer.ToString();
+            return value switch {
+                "null" => null,
+                "true" => true,
+                "false" => false,
+                _ => Converter.Convert(value, type)
+            };
+        }
+
     }
 }

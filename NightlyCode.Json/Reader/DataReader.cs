@@ -1,9 +1,10 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+using System.Threading.Tasks;
 
 namespace NightlyCode.Json.Reader {
     /// <inheritdoc />
     public class DataReader : IDataReader {
+        char[] asyncbuffer = new char[1]; 
         readonly TextReader reader;
 
         /// <summary>
@@ -22,8 +23,20 @@ namespace NightlyCode.Json.Reader {
             return (char)result;
         }
 
+        /// <inheritdoc />
         public void ReadCharacters(char[] characters) {
             reader.ReadBlock(characters, 0, characters.Length);
+        }
+
+        /// <inheritdoc />
+        public async Task<char> ReadCharacterAsync() {
+            await ReadCharactersAsync(asyncbuffer, 1);
+            return asyncbuffer[0];
+        }
+
+        /// <inheritdoc />
+        public Task ReadCharactersAsync(char[] characters, int count) {
+            return reader.ReadBlockAsync(characters, 0, count);
         }
     }
 }

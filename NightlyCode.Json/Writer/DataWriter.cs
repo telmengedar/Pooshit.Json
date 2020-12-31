@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace NightlyCode.Json.Writer {
     /// <inheritdoc />
@@ -22,6 +23,16 @@ namespace NightlyCode.Json.Writer {
         /// <inheritdoc />
         public void WriteString(string data) {
             writer.Write(data);
+        }
+
+        /// <inheritdoc />
+        public Task WriteCharacterAsync(char character) {
+            return writer.WriteAsync(character);
+        }
+
+        /// <inheritdoc />
+        public Task WriteStringAsync(string data) {
+            return writer.WriteAsync(data);
         }
     }
 }

@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace NightlyCode.Json.Writer {
+    
     /// <inheritdoc />
     public class JsonWriter : IJsonWriter {
         readonly HashSet<Type> stringtypes = new HashSet<Type> {
@@ -141,6 +143,118 @@ namespace NightlyCode.Json.Writer {
             }
         }
 
+                /// <inheritdoc />
+        public async Task WriteAsync(object data, IDataWriter writer) {
+            if (data == null) {
+                await writer.WriteStringAsync("null");
+                return;
+            }
+
+            if (data is Array array) {
+                await writer.WriteCharacterAsync('[');
+                bool first = true;
+                foreach (object item in array) {
+                    if (first) first = false;
+                    else await writer.WriteCharacterAsync(',');
+                    Write(item, writer);
+                }
+                await writer.WriteCharacterAsync(']');
+                return;
+            }
+
+            if (data is IDictionary dictionary) {
+                await writer.WriteCharacterAsync('{');
+                bool first = true;
+                foreach (DictionaryEntry entry in dictionary) {
+                    if (first) first = false;
+                    else await writer.WriteCharacterAsync(',');
+                    
+                    Write(entry.Key.ToString().ToLower(), writer);
+                    await writer.WriteCharacterAsync(':');
+                    Write(entry.Value, writer);
+                }
+                await writer.WriteCharacterAsync('}');
+                return;
+            }
+
+            if (data.GetType().IsEnum)
+                data = Convert.ChangeType(data, Enum.GetUnderlyingType(data.GetType()));
+            
+            switch (Type.GetTypeCode(data.GetType())) {
+            case TypeCode.Boolean:
+                if ((bool) data) await writer.WriteStringAsync("true");
+                else await writer.WriteStringAsync("false");
+                break;
+            case TypeCode.SByte:
+            case TypeCode.Byte:
+            case TypeCode.Int16:
+            case TypeCode.Int32:
+            case TypeCode.Int64:
+            case TypeCode.UInt16:
+            case TypeCode.UInt32:
+            case TypeCode.UInt64:
+            case TypeCode.Decimal:
+            case TypeCode.Single:
+            case TypeCode.Double:
+                await writer.WriteStringAsync(Convert.ToString(data, CultureInfo.InvariantCulture));
+                break;
+            case TypeCode.Empty:
+            case TypeCode.DBNull:
+                await writer.WriteStringAsync("null");
+                break;
+            case TypeCode.Char:
+                await writer.WriteCharacterAsync('"');
+                await WriteEscapeValueAsync((char) data, writer);
+                await writer.WriteCharacterAsync('"');
+                break;
+            case TypeCode.DateTime:
+                string datestring = Convert.ToString(data, CultureInfo.InvariantCulture);
+                await writer.WriteCharacterAsync('"');
+                await writer.WriteStringAsync(datestring);
+                await writer.WriteCharacterAsync('"');
+                break;
+            case TypeCode.String:
+                await writer.WriteCharacterAsync('"');
+                foreach (char character in (string) data)
+                    await WriteEscapeValueAsync(character, writer);
+                await writer.WriteCharacterAsync('"');
+                break;
+            case TypeCode.Object:
+                if (stringtypes.Contains(data.GetType())) {
+                    await writer.WriteCharacterAsync('"');
+                    await writer.WriteStringAsync(data.ToString());
+                    await writer.WriteCharacterAsync('"');
+                }
+                else {
+                    bool first = true;
+                    await writer.WriteCharacterAsync('{');
+                    foreach (PropertyInfo property in data.GetType().GetProperties()) {
+                        if (!property.CanWrite || !property.CanRead)
+                            continue;
+
+                        object value = property.GetValue(data);
+                        if (value == null && options.ExcludeNullProperties)
+                            continue;
+                        
+                        if (first) first = false;
+                        else await writer.WriteCharacterAsync(',');
+
+                        await writer.WriteCharacterAsync('"');
+                        options.NamingStrategy(property.Name, writer);
+                        await writer.WriteCharacterAsync('"');
+                        
+                        await writer.WriteCharacterAsync(':');
+                        Write(value, writer);
+                    }
+
+                    await writer.WriteCharacterAsync('}');
+                }
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+            }
+        }
+
         void WriteEscapeValue(char character, IDataWriter writer) {
             switch (character) {
             case '\\':
@@ -166,6 +280,26 @@ namespace NightlyCode.Json.Writer {
                 else
                     writer.WriteCharacter(character);
                 break;
+            }
+        }
+        
+        Task WriteEscapeValueAsync(char character, IDataWriter writer) {
+            switch (character) {
+            case '\\':
+                return writer.WriteCharacterAsync('\\');
+            case '\"':
+                return writer.WriteStringAsync("\\\"");
+            case '\t':
+                return writer.WriteCharacterAsync('\t');
+            case '\r':
+                return writer.WriteCharacterAsync('\r');
+            case '\n':
+                return writer.WriteCharacterAsync('\n');
+            default:
+                if (character < 0x20)
+                    return writer.WriteStringAsync($"\\u{((int) character):x4}");
+                else
+                    return writer.WriteCharacterAsync(character);
             }
         }
     }

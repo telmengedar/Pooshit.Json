@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace NightlyCode.Json.Reader {
     
@@ -18,5 +19,19 @@ namespace NightlyCode.Json.Reader {
         /// </summary>
         /// <param name="characters">target to read characters to</param>
         void ReadCharacters(char[] characters);
+
+        /// <summary>
+        /// reads a character
+        /// </summary>
+        /// <returns>character retrieved from stream. if \0 is returned no more characters are available</returns>
+        Task<char> ReadCharacterAsync();
+
+        /// <summary>
+        /// reads multiple characters
+        /// </summary>
+        /// <param name="characters">target to read characters to</param>
+        /// <param name="count">number of characters to read</param>
+        Task ReadCharactersAsync(char[] characters, int count);
+
     }
 }
