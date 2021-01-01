@@ -261,19 +261,19 @@ namespace NightlyCode.Json.Writer {
         void WriteEscapeValue(char character, IDataWriter writer) {
             switch (character) {
             case '\\':
-                writer.WriteCharacter('\\');
+                writer.WriteString("\\\\");
                 break;
             case '\"':
                 writer.WriteString("\\\"");
                 break;
             case '\t':
-                writer.WriteCharacter('\t');
+                writer.WriteString("\\t");
                 break;
             case '\r':
-                writer.WriteCharacter('\r');
+                writer.WriteString("\\r");
                 break;
             case '\n':
-                writer.WriteCharacter('\n');
+                writer.WriteString("\\n");
                 break;
             default:
                 if (character < 0x20) {
@@ -289,15 +289,15 @@ namespace NightlyCode.Json.Writer {
         Task WriteEscapeValueAsync(char character, IDataWriter writer) {
             switch (character) {
             case '\\':
-                return writer.WriteCharacterAsync('\\');
+                return writer.WriteStringAsync("\\\\");
             case '\"':
                 return writer.WriteStringAsync("\\\"");
             case '\t':
-                return writer.WriteCharacterAsync('\t');
+                return writer.WriteStringAsync("\\t");
             case '\r':
-                return writer.WriteCharacterAsync('\r');
+                return writer.WriteStringAsync("\\r");
             case '\n':
-                return writer.WriteCharacterAsync('\n');
+                return writer.WriteStringAsync("\\n");
             default:
                 if (character < 0x20)
                     return writer.WriteStringAsync($"\\u{((int) character):x4}");

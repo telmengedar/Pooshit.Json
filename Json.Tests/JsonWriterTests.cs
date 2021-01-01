@@ -156,5 +156,17 @@ namespace Json.Tests {
             Assert.AreEqual("92", result);
         }
 
+        [Test, Parallelizable]
+        public void WriteEscapedString() {
+            string result = NightlyCode.Json.Json.WriteString("Hello\nNext Line\n\ttabbed content");
+            Assert.AreEqual("\"Hello\\nNext Line\\n\\ttabbed content\"",result);
+        }
+        
+        [Test, Parallelizable]
+        public async Task WriteEscapedStringAsync() {
+            string result = await NightlyCode.Json.Json.WriteStringAsync("Hello\nNext Line\n\ttabbed content");
+            Assert.AreEqual("\"Hello\\nNext Line\\n\\ttabbed content\"",result);
+        }
+
     }
 }
