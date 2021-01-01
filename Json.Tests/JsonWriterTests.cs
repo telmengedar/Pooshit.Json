@@ -16,6 +16,7 @@ namespace Json.Tests {
         [TestCase(true, "true")]
         [TestCase(false, "false")]
         [TestCase(null, "null")]
+        [TestCase("1234567890", "\"1234567890\"")]
         [Parallelizable]
         public void WriteValue(object data, string expected) {
             string result = NightlyCode.Json.Json.WriteString(data);

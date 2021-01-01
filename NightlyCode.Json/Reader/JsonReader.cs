@@ -2,10 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using NightlyCode.Json.Helpers;
+using NightlyCode.Json.Models;
 using NightlyCode.Json.Tokens;
 
 namespace NightlyCode.Json.Reader {
@@ -119,6 +121,7 @@ namespace NightlyCode.Json.Reader {
                 return dictionary;
             }
 
+            Model model = Model.Get(type);
             object result = Activator.CreateInstance(type);
             
             do {
@@ -135,7 +138,7 @@ namespace NightlyCode.Json.Reader {
                 if (state != ':')
                     throw new FormatException("Missing ':' in json dictionary");
 
-                PropertyInfo property = type.GetProperty(key.ToString(), BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                PropertyInfo property = model.GetProperty(key.ToString());
                 if (property == null) {
                     // read value and skip property
                     Read(typeof(object), reader, ref state);
@@ -154,7 +157,7 @@ namespace NightlyCode.Json.Reader {
                 }
             } while (state != eof && state!='}');
 
-            state = '\0';
+            state = eof;
             return result;
         }
 
@@ -193,6 +196,7 @@ namespace NightlyCode.Json.Reader {
                 return dictionary;
             }
 
+            Model model = Model.Get(type);
             object result = Activator.CreateInstance(type);
             
             do {
@@ -209,7 +213,7 @@ namespace NightlyCode.Json.Reader {
                 if (state.State != ':')
                     throw new FormatException("Missing ':' in json dictionary");
 
-                PropertyInfo property = type.GetProperty(key.ToString(), BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                PropertyInfo property = model.GetProperty(key.ToString());
                 if (property == null) {
                     // read value and skip property
                     await ReadAsync(typeof(object), reader, state);
@@ -255,6 +259,7 @@ namespace NightlyCode.Json.Reader {
                 result.SetValue(item, i);
             }
 
+            state = eof;
             return result;
         }
 
@@ -281,6 +286,7 @@ namespace NightlyCode.Json.Reader {
                 result.SetValue(item, i);
             }
 
+            state.State = eof;
             return result;
         }
 
@@ -386,12 +392,23 @@ namespace NightlyCode.Json.Reader {
             } while (state != eof);
             
             string value = buffer.ToString();
-            return value switch {
+            object typedvalue = value switch {
                 "null" => null,
                 "true" => true,
                 "false" => false,
-                _ => Converter.Convert(value, type)
+                _ => ToValue(value)
             };
+
+            if (type != typeof(object))
+                typedvalue = Converter.Convert(typedvalue, type);
+            return typedvalue;
+        }
+
+        object ToValue(string data) {
+            if (data.All(char.IsDigit))
+                return long.Parse(data, CultureInfo.InvariantCulture);
+
+            return double.Parse(data, CultureInfo.InvariantCulture);
         }
         
         async Task<object> ReadValueAsync(Type type, IDataReader reader, AsyncState state) {
@@ -410,12 +427,16 @@ namespace NightlyCode.Json.Reader {
             } while (state.State != eof);
             
             string value = buffer.ToString();
-            return value switch {
+            object typedvalue = value switch {
                 "null" => null,
                 "true" => true,
                 "false" => false,
-                _ => Converter.Convert(value, type)
+                _ => ToValue(value)
             };
+
+            if (type != typeof(object))
+                typedvalue = Converter.Convert(typedvalue, type);
+            return typedvalue;
         }
 
     }

@@ -1,12 +1,60 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Json.Tests.Data;
+using NightlyCode.Json;
 using NUnit.Framework;
 
 namespace Json.Tests {
     [TestFixture, Parallelizable]
     public class JsonReaderTests {
+
+        [Test, Parallelizable]
+        public void SerializeEnumInObject() {
+            string serialized = NightlyCode.Json.Json.WriteString(new TestData {
+                WeekDay = DayOfWeek.Wednesday
+            });
+            TestData deserialized = NightlyCode.Json.Json.Read<TestData>(serialized);
+            Assert.AreEqual(DayOfWeek.Wednesday, deserialized.WeekDay);
+        }
+
+        [Test, Parallelizable]
+        public void SerializeEnumInObjectCamelCased() {
+            string serialized = NightlyCode.Json.Json.WriteString(new TestData {
+                WeekDay = DayOfWeek.Wednesday
+            }, new JsonOptions {
+                ExcludeNullProperties = true,
+                NamingStrategy = NamingStrategies.CamelCase
+            });
+            TestData deserialized = NightlyCode.Json.Json.Read<TestData>(serialized);
+            Assert.AreEqual(DayOfWeek.Wednesday, deserialized.WeekDay);
+        }
+
+        [Test, Parallelizable]
+        public void ReadArrayOfArray() {
+            object[][] result = NightlyCode.Json.Json.Read<object[][]>("[[1,2],[3,4],[5,6]]");
+            Assert.AreEqual(3, result.Length);
+            Assert.That(result.All(i => i.Length == 2));
+        }
+        
+        [Test, Parallelizable]
+        public void ReadEncodedString() {
+            string data = NightlyCode.Json.Json.Read<string>("\"1234567890\"");
+            Assert.AreEqual("1234567890", data);
+        }
+        
+        [Test, Parallelizable]
+        public void ReadDataMember() {
+            SnakeData snakedata = NightlyCode.Json.Json.Read<SnakeData>("{\"over_the_top\": 99}");
+            Assert.AreEqual(99, snakedata.OverTheTop);
+        }
+        
+        [Test, Parallelizable]
+        public void ReadProperType() {
+            object result = NightlyCode.Json.Json.Read("97");
+            Assert.AreEqual(97, result);
+        }
 
         [TestCase("Json.Tests.Data.map.json")]
         [Parallelizable]
@@ -54,6 +102,26 @@ namespace Json.Tests {
             Assert.AreEqual(2020, result.Year);
             Assert.AreEqual(12, result.Month);
             Assert.AreEqual(31, result.Day);
+        }
+
+        [Test, Parallelizable]
+        public void ReadEstTime() {
+            DateTime result = NightlyCode.Json.Json.Read<DateTime>("\"2020-06-01 03:08am\"");
+            Assert.AreEqual(2020, result.Year);
+            Assert.AreEqual(6, result.Month);
+            Assert.AreEqual(1, result.Day);
+            Assert.AreEqual(3, result.Hour);
+            Assert.AreEqual(8, result.Minute);
+        }
+
+        [Test, Parallelizable]
+        public void ReadEstTimePm() {
+            DateTime result = NightlyCode.Json.Json.Read<DateTime>("\"2020-06-01 03:08pm\"");
+            Assert.AreEqual(2020, result.Year);
+            Assert.AreEqual(6, result.Month);
+            Assert.AreEqual(1, result.Day);
+            Assert.AreEqual(15, result.Hour);
+            Assert.AreEqual(8, result.Minute);
         }
 
         [Test, Parallelizable]

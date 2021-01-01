@@ -9,5 +9,7 @@ namespace Json.Tests.Data {
         public int[] Array { get; set; }
 
         public Guid Guid { get; set; }
+
+        public DayOfWeek WeekDay { get; set; }
     }
 }
