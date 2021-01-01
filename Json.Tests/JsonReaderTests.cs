@@ -148,10 +148,13 @@ namespace Json.Tests {
 
         [Test, Parallelizable]
         public void ReadData() {
-            object result = NightlyCode.Json.Json.Read(NightlyCode.Json.Json.WriteString(new TestData {
-                Guid = Guid.Empty,
-                Decimal = 0.22m
-            }));
+            object result = NightlyCode.Json.Json.Read(typeof(JsonReaderTests).Assembly.GetManifestResourceStream("Json.Tests.Data.testarray.json"));
         }
+        
+        [Test, Parallelizable]
+        public async Task ReadDataAsync() {
+            object result = await NightlyCode.Json.Json.ReadAsync(typeof(JsonReaderTests).Assembly.GetManifestResourceStream("Json.Tests.Data.testarray.json"));
+        }
+
     }
 }
