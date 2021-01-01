@@ -92,7 +92,7 @@ namespace NightlyCode.Json {
         /// <param name="target">stream to write json to</param>
         /// <param name="options">options used to modify json result</param>
         public static void Write(object data, Stream target, JsonOptions options) {
-            using StreamWriter streamwriter = new StreamWriter(target);
+            using StreamWriter streamwriter = new StreamWriter(target, Encoding.UTF8, 1024, true);
             new JsonWriter(options).Write(data, new DataWriter(streamwriter));
         }
 
@@ -113,7 +113,7 @@ namespace NightlyCode.Json {
         /// <param name="target">stream to write json to</param>
         /// <param name="options">options used to modify json result</param>
         public static Task WriteAsync(object data, Stream target, JsonOptions options) {
-            using StreamWriter streamwriter = new StreamWriter(target);
+            using StreamWriter streamwriter = new StreamWriter(target, Encoding.UTF8, 1024, true);
             return new JsonWriter(options).WriteAsync(data, new DataWriter(streamwriter));
         }
 
@@ -195,7 +195,7 @@ namespace NightlyCode.Json {
         /// <param name="data">string to read data from</param>
         /// <returns>converted data</returns>
         public static object Read(Type type, Stream data) {
-            using TextReader textreader = new StreamReader(data);
+            using TextReader textreader = new StreamReader(data, Encoding.UTF8, true, 1024, true);
             return new JsonReader().Read(type, new DataReader(textreader));
         }
 
@@ -206,7 +206,7 @@ namespace NightlyCode.Json {
         /// <param name="data">string to read data from</param>
         /// <returns>converted data</returns>
         public static Task<object> ReadAsync(Type type, Stream data) {
-            using TextReader textreader = new StreamReader(data);
+            using TextReader textreader = new StreamReader(data, Encoding.UTF8, true, 1024, true);
             return new JsonReader().ReadAsync(type, new DataReader(textreader));
         }
 

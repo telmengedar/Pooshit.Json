@@ -12,6 +12,7 @@ namespace NightlyCode.Json.Models {
         static readonly Dictionary<Type, Model> models=new Dictionary<Type, Model>();
         readonly Dictionary<string, PropertyInfo> properties=new Dictionary<string, PropertyInfo>();
         static readonly object cachelock=new object();
+        object modellock = new object();
         
         /// <summary>
         /// gets or creates a model for the specified type
@@ -21,19 +22,21 @@ namespace NightlyCode.Json.Models {
         public static Model Get(Type type) {
             Model model;
             lock (cachelock) {
-                if (!models.TryGetValue(type, out model))
+                if (!models.TryGetValue(type, out model)) {
                     models[type] = model = new Model();
+
+
+                    foreach (PropertyInfo property in type.GetProperties()) {
+                        DataMemberAttribute datamember = (DataMemberAttribute) Attribute.GetCustomAttribute(property, typeof(DataMemberAttribute));
+                        if (datamember != null)
+                            model.properties[datamember.Name] = property;
+                        else model.properties[property.Name.ToLower()] = property;
+
+                        model.properties[property.Name] = property;
+                    }
+                }
             }
 
-            foreach (PropertyInfo property in type.GetProperties()) {
-                DataMemberAttribute datamember = (DataMemberAttribute) Attribute.GetCustomAttribute(property, typeof(DataMemberAttribute));
-                if (datamember != null)
-                    model.properties[datamember.Name] = property;
-                else model.properties[property.Name.ToLower()] = property;
-
-                model.properties[property.Name] = property;
-            }
-            
             return model;
         }
 
@@ -43,10 +46,14 @@ namespace NightlyCode.Json.Models {
         /// <param name="key">key to analyse</param>
         /// <returns>property stored under key</returns>
         public PropertyInfo GetProperty(string key) {
-            if(!properties.TryGetValue(key, out PropertyInfo property)) {
+            PropertyInfo property;
+            lock (modellock) {
+                if (properties.TryGetValue(key, out property)) return property;
+                
                 properties.TryGetValue(key.ToLower(), out property);
                 properties[key] = property;
             }
+
             return property;
         }
     }
