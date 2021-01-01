@@ -113,10 +113,7 @@ namespace NightlyCode.Json.Reader {
                         while (char.IsWhiteSpace(state))
                             state = reader.ReadCharacter();
                     }
-
-                    if (state == ',' || state == '}')
-                        break;
-                } while (state != eof);
+                } while (state != eof && state!='}');
 
                 return dictionary;
             }

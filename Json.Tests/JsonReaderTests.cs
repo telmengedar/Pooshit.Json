@@ -145,5 +145,13 @@ namespace Json.Tests {
             Assert.NotNull(testdata);
             Assert.AreEqual(Guid.Empty, testdata.Guid);
         }
+
+        [Test, Parallelizable]
+        public void ReadData() {
+            object result = NightlyCode.Json.Json.Read(NightlyCode.Json.Json.WriteString(new TestData {
+                Guid = Guid.Empty,
+                Decimal = 0.22m
+            }));
+        }
     }
 }

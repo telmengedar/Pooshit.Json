@@ -19,6 +19,7 @@
     <ItemGroup>
       <None Remove="Data\map.json" />
       <EmbeddedResource Include="Data\map.json" />
+      <None Remove="Data\testjobs.json" />
     </ItemGroup>
 
 </Project>
