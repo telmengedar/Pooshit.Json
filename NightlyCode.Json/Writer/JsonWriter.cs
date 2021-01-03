@@ -57,7 +57,7 @@ namespace NightlyCode.Json.Writer {
                     if (first) first = false;
                     else writer.WriteCharacter(',');
                     
-                    Write(entry.Key.ToString().ToLower(), writer);
+                    Write(entry.Key.ToString(), writer);
                     writer.WriteCharacter(':');
                     Write(entry.Value, writer);
                 }
@@ -172,7 +172,7 @@ namespace NightlyCode.Json.Writer {
                     if (first) first = false;
                     else await writer.WriteCharacterAsync(',');
                     
-                    Write(entry.Key.ToString().ToLower(), writer);
+                    Write(entry.Key.ToString(), writer);
                     await writer.WriteCharacterAsync(':');
                     Write(entry.Value, writer);
                 }
