@@ -159,7 +159,7 @@ namespace NightlyCode.Json.Writer {
                 foreach (object item in array) {
                     if (first) first = false;
                     else await writer.WriteCharacterAsync(',');
-                    Write(item, writer);
+                    await WriteAsync(item, writer);
                 }
                 await writer.WriteCharacterAsync(']');
                 return;
@@ -172,9 +172,9 @@ namespace NightlyCode.Json.Writer {
                     if (first) first = false;
                     else await writer.WriteCharacterAsync(',');
                     
-                    Write(entry.Key.ToString(), writer);
+                    await WriteAsync(entry.Key.ToString(), writer);
                     await writer.WriteCharacterAsync(':');
-                    Write(entry.Value, writer);
+                    await WriteAsync(entry.Value, writer);
                 }
                 await writer.WriteCharacterAsync('}');
                 return;
@@ -247,7 +247,7 @@ namespace NightlyCode.Json.Writer {
                         await writer.WriteCharacterAsync('"');
                         
                         await writer.WriteCharacterAsync(':');
-                        Write(value, writer);
+                        await WriteAsync(value, writer);
                     }
 
                     await writer.WriteCharacterAsync('}');
