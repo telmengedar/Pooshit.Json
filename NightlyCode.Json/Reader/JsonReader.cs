@@ -186,10 +186,9 @@ namespace NightlyCode.Json.Reader {
                         while (char.IsWhiteSpace(state.State))
                             state.State = await reader.ReadCharacterAsync();
                     }
-
-                    state.State = eof;
                 } while (state.State != eof && state.State!='}');
 
+                state.State = eof;
                 return dictionary;
             }
 

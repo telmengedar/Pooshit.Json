@@ -131,7 +131,7 @@ namespace NightlyCode.Json.Writer {
                         else writer.WriteCharacter(',');
 
                         writer.WriteCharacter('"');
-                        options.NamingStrategy(property.Name, writer);
+                        options.NamingStrategy.WriteName(property.Name, writer);
                         writer.WriteCharacter('"');
                         
                         writer.WriteCharacter(':');
@@ -243,7 +243,7 @@ namespace NightlyCode.Json.Writer {
                         else await writer.WriteCharacterAsync(',');
 
                         await writer.WriteCharacterAsync('"');
-                        options.NamingStrategy(property.Name, writer);
+                        await options.NamingStrategy.WriteNameAsync(property.Name, writer);
                         await writer.WriteCharacterAsync('"');
                         
                         await writer.WriteCharacterAsync(':');

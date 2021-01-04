@@ -64,6 +64,9 @@ I don't think so.
 While it generally should perform well enough and was tested in some projects it is not optimized in any way at all.
 If you need the fastest library of them all you probably should look somewhere else.
 
+Btw. Async methods are proven to be terribly slow as they are only implemented currently to work in async cases. Some refactoring
+will be done here later on when everything else seems to work well enough.
+
 ### But then it definitively is the smallest library out there?
 
 Probably not ... It was written to just contain the stuff needed to get the job done but again no specific steps were taken

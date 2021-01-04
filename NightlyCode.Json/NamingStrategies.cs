@@ -1,4 +1,5 @@
 ﻿using NightlyCode.Json.Writer;
+using NightlyCode.Json.Writer.Naming;
 
 namespace NightlyCode.Json {
     
@@ -10,41 +11,17 @@ namespace NightlyCode.Json {
         /// <summary>
         /// writes property names as they are
         /// </summary>
-        /// <param name="name">name to write</param>
-        /// <param name="writer">writer to write property name to</param>
-        public static void None(string name, IDataWriter writer) {
-            writer.WriteString(name);
-        }
-        
+        public static INamingStrategy None => new DefaultNamingStrategy();
+
         /// <summary>
         /// converts starting uppercase characters to lowercase
         /// </summary>
-        /// <param name="name">name to convert</param>
-        /// <param name="writer">writer to write result to</param>
-        public static void CamelCase(string name, IDataWriter writer) {
-            int index = -1;
-            for (int i = 0; i < name.Length; ++i) {
-                if (!char.IsLower(name[i])) 
-                    continue;
-                index = i;
-                break;
-            }
-
-            if (index <= 0)
-                writer.WriteString(name.ToLower());
-            else {
-                writer.WriteString(name.Substring(0, index).ToLower());
-                writer.WriteString(name.Substring(index, name.Length - index));
-            }
-        }
+        public static INamingStrategy CamelCase => new CamelCaseNamingStrategy();
 
         /// <summary>
         /// writes property names in all lowercase
         /// </summary>
-        /// <param name="name">property name to convert</param>
-        /// <param name="writer">writer to write result to</param>
-        public static void LowerCase(string name, IDataWriter writer) {
-            writer.WriteString(name.ToLower());
-        }
+        public static INamingStrategy LowerCase => new LowerCaseNamingStrategy();
+
     }
 }
