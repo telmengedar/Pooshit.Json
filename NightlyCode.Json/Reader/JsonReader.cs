@@ -115,6 +115,7 @@ namespace NightlyCode.Json.Reader {
                     }
                 } while (state != eof && state!='}');
 
+                state = eof;
                 return dictionary;
             }
 
@@ -186,6 +187,7 @@ namespace NightlyCode.Json.Reader {
                             state.State = await reader.ReadCharacterAsync();
                     }
 
+                    state.State = eof;
                 } while (state.State != eof && state.State!='}');
 
                 return dictionary;

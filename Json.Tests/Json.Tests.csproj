@@ -18,10 +18,18 @@
 
     <ItemGroup>
       <None Remove="Data\map.json" />
+      <EmbeddedResource Include="Data\emptyobjectpropertyinarray.json" />
       <EmbeddedResource Include="Data\map.json" />
       <None Remove="Data\testjobs.json" />
       <None Remove="Data\testarray.json" />
       <EmbeddedResource Include="Data\testarray.json" />
+      <None Remove="Data\campaign.json" />
+      <None Remove="Data\emptyobjectproperty.json" />
+      <EmbeddedResource Include="Data\emptyobjectproperty.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Data\campaign.json" />
     </ItemGroup>
 
 </Project>

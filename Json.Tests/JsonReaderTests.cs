@@ -146,15 +146,23 @@ namespace Json.Tests {
             Assert.AreEqual(Guid.Empty, testdata.Guid);
         }
 
-        [Test, Parallelizable]
-        public void ReadData() {
-            object result = NightlyCode.Json.Json.Read(typeof(JsonReaderTests).Assembly.GetManifestResourceStream("Json.Tests.Data.testarray.json"));
+        [TestCase("Json.Tests.Data.testarray.json")]
+        [TestCase("Json.Tests.Data.emptyobjectproperty.json")]
+        [TestCase("Json.Tests.Data.emptyobjectpropertyinarray.json")]
+        [TestCase("Json.Tests.Data.campaign.json")]
+        [Parallelizable]
+        public void ReadData(string resource) {
+            object result = NightlyCode.Json.Json.Read(typeof(JsonReaderTests).Assembly.GetManifestResourceStream(resource));
         }
         
-        [Test, Parallelizable]
-        public async Task ReadDataAsync() {
-            object result = await NightlyCode.Json.Json.ReadAsync(typeof(JsonReaderTests).Assembly.GetManifestResourceStream("Json.Tests.Data.testarray.json"));
+        [TestCase("Json.Tests.Data.testarray.json")]
+        [TestCase("Json.Tests.Data.emptyobjectproperty.json")]
+        [TestCase("Json.Tests.Data.emptyobjectpropertyinarray.json")]
+        [TestCase("Json.Tests.Data.campaign.json")]
+        [Parallelizable]
+        public async Task ReadDataAsync(string resource) {
+            object result = await NightlyCode.Json.Json.ReadAsync(typeof(JsonReaderTests).Assembly.GetManifestResourceStream(resource));
         }
-
+        
     }
 }

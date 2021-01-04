@@ -1,0 +1,45 @@
+﻿{
+  "brokers": [
+    {
+    }
+  ],
+  "items": [
+    {
+      "feedId": "bimmel",
+      "publisher": {},
+      "company": {
+        "name": "Testcompany",
+        "url": "https://nani.wat",
+        "eMail": "wat@nani.wat"
+      },
+      "location": {
+        "country": "DE",
+        "state": "Hessen",
+        "city": "Frankfurt am Main"
+      }
+    },
+    {
+      "feedId": "bimmel",
+      "publisher": {},
+      "company": {
+        "name": "Testcompany",
+        "url": "https://nani.wat",
+        "eMail": "wat@nani.wat"
+      },
+      "location": {
+        "country": "DE",
+        "state": "Hessen",
+        "city": "Frankfurt am Main"
+      }
+    }
+  ],
+  "id": 12313,
+  "name": "test",
+  "budget": 0,
+  "cpa": {
+    
+  },
+  "clickCosts": 0.12,
+  "start": "2019-03-13T00:07:51.4580780",
+  "status": "Created"
+}

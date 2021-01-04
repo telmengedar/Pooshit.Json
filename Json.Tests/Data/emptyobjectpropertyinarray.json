@@ -1,0 +1,20 @@
+﻿[
+  {
+    "name": "Paul",
+    "details": {},
+    "age": 82
+  },
+  {
+    "name": "Paul",
+    "details": {},
+    "moreDetails": {
+      "sanity": "questionable"
+    },
+    "age": 82
+  },
+  {
+    "name": "Paul",
+    "details": {},
+    "age": 82
+  }
+]
