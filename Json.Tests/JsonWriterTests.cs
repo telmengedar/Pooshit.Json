@@ -168,5 +168,9 @@ namespace Json.Tests {
             Assert.AreEqual("\"Hello\\nNext Line\\n\\ttabbed content\"",result);
         }
 
+        [Test, Parallelizable]
+        public void WriteDataWithIndexer() {
+            string result = NightlyCode.Json.Json.WriteString(new DataWithIndexer());
+        }
     }
 }

@@ -120,7 +120,7 @@ namespace NightlyCode.Json.Writer {
                     bool first = true;
                     writer.WriteCharacter('{');
                     foreach (PropertyInfo property in data.GetType().GetProperties()) {
-                        if (!property.CanWrite || !property.CanRead)
+                        if (!property.CanWrite || !property.CanRead || property.GetIndexParameters().Length>0)
                             continue;
 
                         object value = property.GetValue(data);
@@ -232,7 +232,7 @@ namespace NightlyCode.Json.Writer {
                     bool first = true;
                     await writer.WriteCharacterAsync('{');
                     foreach (PropertyInfo property in data.GetType().GetProperties()) {
-                        if (!property.CanWrite || !property.CanRead)
+                        if (!property.CanWrite || !property.CanRead || property.GetIndexParameters().Length > 0)
                             continue;
 
                         object value = property.GetValue(data);
