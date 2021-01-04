@@ -65,8 +65,11 @@ namespace NightlyCode.Json.Writer {
                 return;
             }
 
-            if (data.GetType().IsEnum)
-                data = Convert.ChangeType(data, Enum.GetUnderlyingType(data.GetType()));
+            if (data.GetType().IsEnum) {
+                if (options.WriteEnumsAsStrings)
+                    data = data.ToString();
+                else data = Convert.ChangeType(data, Enum.GetUnderlyingType(data.GetType()));
+            }
 
             if (data is TimeSpan span)
                 data = span.ToString("c", CultureInfo.InvariantCulture);
@@ -180,9 +183,15 @@ namespace NightlyCode.Json.Writer {
                 return;
             }
 
-            if (data.GetType().IsEnum)
-                data = Convert.ChangeType(data, Enum.GetUnderlyingType(data.GetType()));
-            
+            if (data.GetType().IsEnum) {
+                if (options.WriteEnumsAsStrings)
+                    data = data.ToString();
+                else data = Convert.ChangeType(data, Enum.GetUnderlyingType(data.GetType()));
+            }
+
+            if (data is TimeSpan span)
+                data = span.ToString("c", CultureInfo.InvariantCulture);
+
             switch (Type.GetTypeCode(data.GetType())) {
             case TypeCode.Boolean:
                 if ((bool) data) await writer.WriteStringAsync("true");
@@ -211,7 +220,7 @@ namespace NightlyCode.Json.Writer {
                 await writer.WriteCharacterAsync('"');
                 break;
             case TypeCode.DateTime:
-                string datestring = Convert.ToString(data, CultureInfo.InvariantCulture);
+                string datestring = ((DateTime) data).ToString("o", CultureInfo.InvariantCulture);
                 await writer.WriteCharacterAsync('"');
                 await writer.WriteStringAsync(datestring);
                 await writer.WriteCharacterAsync('"');

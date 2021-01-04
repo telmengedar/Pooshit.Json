@@ -133,7 +133,15 @@ namespace Json.Tests {
             Assert.AreEqual(34, result.Minutes);
             Assert.AreEqual(22, result.Seconds);
         }
-        
+
+        [Test, Parallelizable]
+        public async Task ReadTimespanAsync() {
+            TimeSpan result = await NightlyCode.Json.Json.ReadAsync<TimeSpan>("\"04:34:22\"");
+            Assert.AreEqual(4, result.Hours);
+            Assert.AreEqual(34, result.Minutes);
+            Assert.AreEqual(22, result.Seconds);
+        }
+
         [Test, Parallelizable]
         public void ReadGuidProperty() {
             TestData testdata = NightlyCode.Json.Json.Read<TestData>("{\"guid\":\"00000000-0000-0000-0000-000000000000\"}");

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Json.Tests.Data;
+using NightlyCode.Json;
 using NUnit.Framework;
 
 namespace Json.Tests {
@@ -30,11 +31,23 @@ namespace Json.Tests {
         }
 
         [Test, Parallelizable]
+        public async Task WriteDateTimeAsync() {
+            string result = await NightlyCode.Json.Json.WriteStringAsync(new DateTime(2020, 12, 31));
+            Assert.AreEqual("\"2020-12-31T00:00:00.0000000\"", result);
+        }
+
+        [Test, Parallelizable]
         public void WriteTimeSpan() {
             string result = NightlyCode.Json.Json.WriteString(new TimeSpan(4, 34, 22));
             Assert.AreEqual("\"04:34:22\"", result);
         }
-        
+
+        [Test, Parallelizable]
+        public async Task WriteTimeSpanAsync() {
+            string result = await NightlyCode.Json.Json.WriteStringAsync(new TimeSpan(4, 34, 22));
+            Assert.AreEqual("\"04:34:22\"", result);
+        }
+
         [TestCase(1, "1")]
         [TestCase(8L, "8")]
         [TestCase(9.98, "9.98")]
@@ -124,6 +137,22 @@ namespace Json.Tests {
         public async Task WriteEnumAsync() {
             string result = await NightlyCode.Json.Json.WriteStringAsync(DayOfWeek.Tuesday);
             Assert.AreEqual("2", result);
+        }
+
+        [Test, Parallelizable]
+        public void WriteEnumString() {
+            string result = NightlyCode.Json.Json.WriteString(DayOfWeek.Tuesday, new JsonOptions {
+                WriteEnumsAsStrings = true
+            });
+            Assert.AreEqual("\"Tuesday\"", result);
+        }
+
+        [Test, Parallelizable]
+        public async Task WriteEnumStringAsync() {
+            string result = await NightlyCode.Json.Json.WriteStringAsync(DayOfWeek.Tuesday, new JsonOptions {
+                WriteEnumsAsStrings = true
+            });
+            Assert.AreEqual("\"Tuesday\"", result);
         }
 
         [Test, Parallelizable]

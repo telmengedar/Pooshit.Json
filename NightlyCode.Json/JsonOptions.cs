@@ -21,6 +21,12 @@ namespace NightlyCode.Json {
         public bool ExcludeNullProperties { get; set; }
 
         /// <summary>
+        /// determines whether to write the string representation of enum values
+        /// if false the underlying number value is written
+        /// </summary>
+        public bool WriteEnumsAsStrings { get; set; }
+        
+        /// <summary>
         /// default settings used when writing json
         /// </summary>
         public static JsonOptions Default => new JsonOptions {
