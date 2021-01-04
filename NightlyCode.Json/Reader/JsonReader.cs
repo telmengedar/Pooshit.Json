@@ -87,7 +87,7 @@ namespace NightlyCode.Json.Reader {
         }
 
         object ReadObject(Type type, IDataReader reader, ref char state) {
-            if (type == typeof(object) || type == typeof(IDictionary)) {
+            if (type == typeof(object) || type == typeof(IDictionary)|| typeof(IDictionary<string,object>).IsAssignableFrom(type)) {
                 Dictionary<string, object> dictionary=new Dictionary<string, object>();
 
                 do {
@@ -160,7 +160,7 @@ namespace NightlyCode.Json.Reader {
         }
 
         async Task<object> ReadObjectAsync(Type type, IDataReader reader, AsyncState state) {
-            if (type == typeof(object) || type == typeof(IDictionary)) {
+            if (type == typeof(object) || type == typeof(IDictionary) || typeof(IDictionary<string,object>).IsAssignableFrom(type)) {
                 Dictionary<string, object> dictionary=new Dictionary<string, object>();
 
                 do {

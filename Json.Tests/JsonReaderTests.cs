@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -163,6 +165,10 @@ namespace Json.Tests {
         public async Task ReadDataAsync(string resource) {
             object result = await NightlyCode.Json.Json.ReadAsync(typeof(JsonReaderTests).Assembly.GetManifestResourceStream(resource));
         }
-        
+
+        [Test, Parallelizable]
+        public void ReadAsDictionaryInterface() {
+            NightlyCode.Json.Json.Read<IDictionary<string, object>>("{\"name\":\"Günther\"}");
+        }
     }
 }
