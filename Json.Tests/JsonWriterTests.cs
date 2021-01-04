@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Json.Tests.Data;
@@ -201,5 +202,30 @@ namespace Json.Tests {
         public void WriteDataWithIndexer() {
             string result = NightlyCode.Json.Json.WriteString(new DataWithIndexer());
         }
+
+        [Test, Parallelizable]
+        public void WriteList() {
+            string result = NightlyCode.Json.Json.WriteString(new List<object>() {1, 2, 3, 4, 5});
+            Assert.AreEqual("[1,2,3,4,5]", result);
+        }
+        
+        [Test, Parallelizable]
+        public async Task WriteListAsync() {
+            string result = await NightlyCode.Json.Json.WriteStringAsync(new List<object>() {1, 2, 3, 4, 5});
+            Assert.AreEqual("[1,2,3,4,5]", result);
+        }
+        
+        [Test, Parallelizable]
+        public void IgnoreAttribute() {
+            string result = NightlyCode.Json.Json.WriteString(new DataWithIgnoredProperties());
+            Assert.AreEqual("{\"Visible\":0}", result);
+        }
+        
+        [Test, Parallelizable]
+        public async Task IgnoreAttributeAsync() {
+            string result = await NightlyCode.Json.Json.WriteStringAsync(new DataWithIgnoredProperties());
+            Assert.AreEqual("{\"Visible\":0}", result);
+        }
+
     }
 }

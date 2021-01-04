@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
 namespace NightlyCode.Json.Writer {
@@ -38,18 +39,6 @@ namespace NightlyCode.Json.Writer {
                 return;
             }
 
-            if (data is Array array) {
-                writer.WriteCharacter('[');
-                bool first = true;
-                foreach (object item in array) {
-                    if (first) first = false;
-                    else writer.WriteCharacter(',');
-                    Write(item, writer);
-                }
-                writer.WriteCharacter(']');
-                return;
-            }
-
             if (data is IDictionary dictionary) {
                 writer.WriteCharacter('{');
                 bool first = true;
@@ -65,6 +54,18 @@ namespace NightlyCode.Json.Writer {
                 return;
             }
 
+            if (!(data is string) && data is IEnumerable array) {
+                writer.WriteCharacter('[');
+                bool first = true;
+                foreach (object item in array) {
+                    if (first) first = false;
+                    else writer.WriteCharacter(',');
+                    Write(item, writer);
+                }
+                writer.WriteCharacter(']');
+                return;
+            }
+            
             if (data.GetType().IsEnum) {
                 if (options.WriteEnumsAsStrings)
                     data = data.ToString();
@@ -123,7 +124,7 @@ namespace NightlyCode.Json.Writer {
                     bool first = true;
                     writer.WriteCharacter('{');
                     foreach (PropertyInfo property in data.GetType().GetProperties()) {
-                        if (!property.CanWrite || !property.CanRead || property.GetIndexParameters().Length>0)
+                        if (!property.CanWrite || !property.CanRead || property.GetIndexParameters().Length > 0 || Attribute.IsDefined(property, typeof(IgnoreDataMemberAttribute)))
                             continue;
 
                         object value = property.GetValue(data);
@@ -156,18 +157,6 @@ namespace NightlyCode.Json.Writer {
                 return;
             }
 
-            if (data is Array array) {
-                await writer.WriteCharacterAsync('[');
-                bool first = true;
-                foreach (object item in array) {
-                    if (first) first = false;
-                    else await writer.WriteCharacterAsync(',');
-                    await WriteAsync(item, writer);
-                }
-                await writer.WriteCharacterAsync(']');
-                return;
-            }
-
             if (data is IDictionary dictionary) {
                 await writer.WriteCharacterAsync('{');
                 bool first = true;
@@ -183,6 +172,18 @@ namespace NightlyCode.Json.Writer {
                 return;
             }
 
+            if (!(data is string) && data is IEnumerable array) {
+                await writer.WriteCharacterAsync('[');
+                bool first = true;
+                foreach (object item in array) {
+                    if (first) first = false;
+                    else await writer.WriteCharacterAsync(',');
+                    await WriteAsync(item, writer);
+                }
+                await writer.WriteCharacterAsync(']');
+                return;
+            }
+            
             if (data.GetType().IsEnum) {
                 if (options.WriteEnumsAsStrings)
                     data = data.ToString();
@@ -241,7 +242,7 @@ namespace NightlyCode.Json.Writer {
                     bool first = true;
                     await writer.WriteCharacterAsync('{');
                     foreach (PropertyInfo property in data.GetType().GetProperties()) {
-                        if (!property.CanWrite || !property.CanRead || property.GetIndexParameters().Length > 0)
+                        if (!property.CanWrite || !property.CanRead || property.GetIndexParameters().Length > 0 || Attribute.IsDefined(property, typeof(IgnoreDataMemberAttribute)))
                             continue;
 
                         object value = property.GetValue(data);
