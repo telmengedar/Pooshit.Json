@@ -64,6 +64,7 @@ namespace NightlyCode.Json {
             StringBuilder builder = new StringBuilder();
             using (StringWriter stringwriter = new StringWriter(builder))
                 await new JsonWriter(options).WriteAsync(data, new DataWriter(stringwriter));
+
             return builder.ToString();
         }
 
@@ -112,9 +113,15 @@ namespace NightlyCode.Json {
         /// <param name="data">data to write</param>
         /// <param name="target">stream to write json to</param>
         /// <param name="options">options used to modify json result</param>
-        public static Task WriteAsync(object data, Stream target, JsonOptions options) {
+        public static async Task WriteAsync(object data, Stream target, JsonOptions options) {
+#if NETSTANDARD2_1
+            await
+#endif
             using StreamWriter streamwriter = new StreamWriter(target, Encoding.UTF8, 1024, true);
-            return new JsonWriter(options).WriteAsync(data, new DataWriter(streamwriter));
+            await WriteAsync(data, streamwriter, options);
+#if !NETSTANDARD2_1
+            await streamwriter.FlushAsync();
+#endif
         }
 
         /// <summary>
