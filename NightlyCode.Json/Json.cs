@@ -151,9 +151,9 @@ namespace NightlyCode.Json {
         /// <param name="type">type of data to read</param>
         /// <param name="data">string to read data from</param>
         /// <returns>converted data</returns>
-        public static Task<object> ReadAsync(Type type, string data) {
+        public static async Task<object> ReadAsync(Type type, string data) {
             using TextReader textreader = new StringReader(data);
-            return new JsonReader().ReadAsync(type, new DataReader(textreader));
+            return await new JsonReader().ReadAsync(type, new DataReader(textreader));
         }
 
         /// <summary>
@@ -212,9 +212,9 @@ namespace NightlyCode.Json {
         /// <param name="type">type of data to read</param>
         /// <param name="data">string to read data from</param>
         /// <returns>converted data</returns>
-        public static Task<object> ReadAsync(Type type, Stream data) {
-            using TextReader textreader = new StreamReader(data, Encoding.UTF8, true, 1024, true);
-            return new JsonReader().ReadAsync(type, new DataReader(textreader));
+        public static async Task<object> ReadAsync(Type type, Stream data) {
+            using StreamReader textreader = new StreamReader(data, Encoding.UTF8, true, 1024, true);
+            return await new JsonReader().ReadAsync(type, new DataReader(textreader));
         }
 
         /// <summary>

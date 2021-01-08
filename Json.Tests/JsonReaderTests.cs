@@ -171,9 +171,19 @@ namespace Json.Tests {
         [TestCase("Json.Tests.Data.campaign.json")]
         [Parallelizable]
         public async Task ReadDataAsync(string resource) {
-            object result = await NightlyCode.Json.Json.ReadAsync(typeof(JsonReaderTests).Assembly.GetManifestResourceStream(resource));
+            await NightlyCode.Json.Json.ReadAsync(typeof(JsonReaderTests).Assembly.GetManifestResourceStream(resource));
         }
 
+        [TestCase("Json.Tests.Data.testarray.json")]
+        [TestCase("Json.Tests.Data.emptyobjectproperty.json")]
+        [TestCase("Json.Tests.Data.emptyobjectpropertyinarray.json")]
+        [TestCase("Json.Tests.Data.campaign.json")]
+        [Parallelizable]
+        public async Task ReadAsyncFromAutoClosingStream(string resource) {
+            await using AutoclosingStream acl = new AutoclosingStream(typeof(JsonReaderTests).Assembly.GetManifestResourceStream(resource)); 
+            await NightlyCode.Json.Json.ReadAsync(acl);
+        }
+        
         [Test, Parallelizable]
         public void ReadAsDictionaryInterface() {
             NightlyCode.Json.Json.Read<IDictionary<string, object>>("{\"name\":\"Günther\"}");
