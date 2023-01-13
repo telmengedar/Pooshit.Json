@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using NightlyCode.Json.Extensions;
 using NightlyCode.Json.Helpers;
 using NightlyCode.Json.Reader;
 using NightlyCode.Json.Writer;
@@ -206,6 +209,39 @@ namespace NightlyCode.Json {
             return new JsonReader().Read(type, new DataReader(textreader));
         }
 
+        /// <summary>
+        /// reads an object from a json structure
+        /// </summary>
+        /// <param name="type">type of data to read</param>
+        /// <param name="structure">json data. should be a string, a stream, an idictionary or an array</param>
+        /// <returns>read data</returns>
+        public static object Read(Type type, object structure) {
+            if (structure == null)
+                return null;
+            if (type.IsInstanceOfType(structure))
+                return structure;
+            
+            if (structure is string stringdata)
+                return Read(type, stringdata);
+            if (structure is Stream streamdata)
+                return Read(type, streamdata);
+            if (structure is IDictionary<string, object> dictionary)
+                return dictionary.ReadType(type);
+            if (structure is IEnumerable array)
+                return array.ReadArray(type.GetElementType());
+            return Converter.Convert(structure, type);
+        }
+
+        /// <summary>
+        /// reads an object from a json structure
+        /// </summary>
+        /// <param name="structure">json data. should be a string, a stream, an idictionary or an array</param>
+        /// <typeparam name="T">type of data to read</typeparam>
+        /// <returns>data read from structure</returns>
+        public static T Read<T>(object structure) {
+            return (T)Read(typeof(T), structure);
+        }
+        
         /// <summary>
         /// reads an object from a json stream
         /// </summary>

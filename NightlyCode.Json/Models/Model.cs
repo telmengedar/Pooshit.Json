@@ -12,7 +12,7 @@ namespace NightlyCode.Json.Models {
         static readonly Dictionary<Type, Model> models=new Dictionary<Type, Model>();
         readonly Dictionary<string, PropertyInfo> properties=new Dictionary<string, PropertyInfo>();
         static readonly object cachelock=new object();
-        object modellock = new object();
+        readonly object modellock = new object();
         
         /// <summary>
         /// gets or creates a model for the specified type

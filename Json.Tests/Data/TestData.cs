@@ -11,5 +11,7 @@ namespace Json.Tests.Data {
         public Guid Guid { get; set; }
 
         public DayOfWeek WeekDay { get; set; }
+
+        public TestData[] ObjectArray { get; set; }
     }
 }

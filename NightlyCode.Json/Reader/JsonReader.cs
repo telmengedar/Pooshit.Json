@@ -395,6 +395,8 @@ namespace NightlyCode.Json.Reader {
                 _ => ToValue(value)
             };
 
+            if (type == typeof(double) && typedvalue == null)
+                return double.NaN;
             if (type != typeof(object))
                 typedvalue = Converter.Convert(typedvalue, type);
             return typedvalue;

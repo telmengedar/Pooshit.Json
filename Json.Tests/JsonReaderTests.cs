@@ -188,5 +188,40 @@ namespace Json.Tests {
         public void ReadAsDictionaryInterface() {
             NightlyCode.Json.Json.Read<IDictionary<string, object>>("{\"name\":\"Günther\"}");
         }
+
+        [Test, Parallelizable]
+        public void ReadTypeFromStructure() {
+            object structure = NightlyCode.Json.Json.Read<object>("{\"long\":4,\"childTestData\":{\"string\": \"abc\"},\"array\":[4,3,3,9], \"objectArray\":[{\"string\": \"abc1\"},{\"string\": \"abc2\"}]}");
+            TestData data = NightlyCode.Json.Json.Read<TestData>(structure);
+            Assert.NotNull(data);
+            Assert.NotNull(data.ChildTestData);
+            Assert.NotNull(data.Array);
+            Assert.NotNull(data.ObjectArray);
+            Assert.AreEqual(4, data.Long);
+            Assert.AreEqual("abc", data.ChildTestData.String);
+            Assert.That(new int[] { 4, 3, 3, 9 }.SequenceEqual(data.Array));
+            Assert.AreEqual(2, data.ObjectArray.Length);
+            Assert.AreEqual("abc1", data.ObjectArray[0].String);
+            Assert.AreEqual("abc2", data.ObjectArray[1].String);
+        }
+        
+        [Test, Parallelizable]
+        public void ReadArrayFromStructure() {
+            object structure = NightlyCode.Json.Json.Read<object>("[{\"string\": \"abc1\"},{\"string\": \"abc2\"}]");
+            TestData[] data = NightlyCode.Json.Json.Read<TestData[]>(structure);
+            Assert.NotNull(data);
+            Assert.AreEqual(2, data.Length);
+            Assert.AreEqual("abc1", data[0].String);
+            Assert.AreEqual("abc2", data[1].String);
+        }
+
+        [Test, Parallelizable]
+        public void ReadDictionaryInterface() {
+            object structure = NightlyCode.Json.Json.Read<object>("{\"dictionary\": {\"name\": 8}}");
+            DataWithDictionary dictionary = NightlyCode.Json.Json.Read<DataWithDictionary>(structure);
+            Assert.NotNull(dictionary);
+            Assert.NotNull(dictionary.Dictionary);
+            Assert.AreEqual(8L, dictionary.Dictionary["name"]);
+        }
     }
 }

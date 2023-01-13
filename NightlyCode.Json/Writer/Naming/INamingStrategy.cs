@@ -1,12 +1,19 @@
 ﻿using System.Threading.Tasks;
 
-namespace NightlyCode.Json.Writer {
+namespace NightlyCode.Json.Writer.Naming {
     
     /// <summary>
     /// strategy used when writing property names of objects
     /// </summary>
     public interface INamingStrategy {
 
+        /// <summary>
+        /// generate a name matching the naming strategy
+        /// </summary>
+        /// <param name="name">name to modify</param>
+        /// <returns>name to write to json</returns>
+        string GenerateName(string name);
+        
         /// <summary>
         /// writes a name
         /// </summary>

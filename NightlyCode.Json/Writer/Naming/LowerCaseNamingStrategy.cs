@@ -8,6 +8,11 @@ namespace NightlyCode.Json.Writer.Naming {
     public class LowerCaseNamingStrategy : INamingStrategy {
         
         /// <inheritdoc />
+        public string GenerateName(string name) {
+            return name.ToLower();
+        }
+
+        /// <inheritdoc />
         public void WriteName(string name, IDataWriter writer) {
             writer.WriteString(name.ToLower());
         }

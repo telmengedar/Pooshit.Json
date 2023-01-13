@@ -7,7 +7,8 @@ namespace NightlyCode.Json.Writer.Naming {
     /// </summary>
     public class CamelCaseNamingStrategy : INamingStrategy {
         
-        string ModifyName(string name) {
+        /// <inheritdoc />
+        public string GenerateName(string name) {
             int index = -1;
             for (int i = 0; i < name.Length; ++i) {
                 if (!char.IsLower(name[i])) 
@@ -23,12 +24,12 @@ namespace NightlyCode.Json.Writer.Naming {
 
         /// <inheritdoc />
         public void WriteName(string name, IDataWriter writer) {
-            writer.WriteString(ModifyName(name));
+            writer.WriteString(GenerateName(name));
         }
 
         /// <inheritdoc />
         public Task WriteNameAsync(string name, IDataWriter writer) {
-            return writer.WriteStringAsync(ModifyName(name));
+            return writer.WriteStringAsync(GenerateName(name));
         }
     }
 }

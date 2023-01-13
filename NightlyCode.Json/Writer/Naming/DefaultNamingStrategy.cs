@@ -8,6 +8,11 @@ namespace NightlyCode.Json.Writer.Naming {
     public class DefaultNamingStrategy : INamingStrategy {
         
         /// <inheritdoc />
+        public string GenerateName(string name) {
+            return name;
+        }
+
+        /// <inheritdoc />
         public void WriteName(string name, IDataWriter writer) {
             writer.WriteString(name);
         }

@@ -1,4 +1,5 @@
 ﻿using NightlyCode.Json.Writer;
+using NightlyCode.Json.Writer.Naming;
 
 namespace NightlyCode.Json {
     
@@ -25,6 +26,11 @@ namespace NightlyCode.Json {
         /// if false the underlying number value is written
         /// </summary>
         public bool WriteEnumsAsStrings { get; set; }
+
+        /// <summary>
+        /// determines whether to include line breaks and indentation when writing json data
+        /// </summary>
+        public bool FormatOutput { get; set; }
         
         /// <summary>
         /// default settings used when writing json

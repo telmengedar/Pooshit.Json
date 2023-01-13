@@ -15,7 +15,8 @@ namespace NightlyCode.Json.Writer {
         };
 
         readonly JsonOptions options;
-
+        int indentation = 0;
+        
         /// <summary>
         /// creates a new <see cref="JsonWriter"/>
         /// </summary>
@@ -42,10 +43,24 @@ namespace NightlyCode.Json.Writer {
             if (data is IDictionary dictionary) {
                 writer.WriteCharacter('{');
                 bool first = true;
+                
+                if (options.FormatOutput) {
+                    ++indentation;
+                    writer.WriteCharacter('\n');
+                        
+                }
+
                 foreach (DictionaryEntry entry in dictionary) {
                     if (first) first = false;
-                    else writer.WriteCharacter(',');
-                    
+                    else {
+                        writer.WriteCharacter(',');
+                        if(options.FormatOutput)
+                            writer.WriteCharacter('\n');
+                    }
+
+                    if(options.FormatOutput)
+                        writer.WriteString(new string('\t', indentation));
+
                     Write(entry.Key.ToString(), writer);
                     writer.WriteCharacter(':');
                     Write(entry.Value, writer);
@@ -89,9 +104,17 @@ namespace NightlyCode.Json.Writer {
             case TypeCode.UInt32:
             case TypeCode.UInt64:
             case TypeCode.Decimal:
-            case TypeCode.Single:
-            case TypeCode.Double:
                 writer.WriteString(Convert.ToString(data, CultureInfo.InvariantCulture));
+                break;
+            case TypeCode.Single:
+                if (float.IsNaN((float)data) || float.IsInfinity((float)data))
+                    writer.WriteString("null");
+                else writer.WriteString(Convert.ToString(data, CultureInfo.InvariantCulture));
+                break;
+            case TypeCode.Double:
+                if (double.IsNaN((double)data) || double.IsInfinity((double)data))
+                    writer.WriteString("null");
+                else writer.WriteString(Convert.ToString(data, CultureInfo.InvariantCulture));
                 break;
             case TypeCode.Empty:
             case TypeCode.DBNull:
@@ -123,6 +146,12 @@ namespace NightlyCode.Json.Writer {
                 else {
                     bool first = true;
                     writer.WriteCharacter('{');
+                    if (options.FormatOutput) {
+                        ++indentation;
+                        writer.WriteCharacter('\n');
+                        
+                    }
+                    
                     foreach (PropertyInfo property in data.GetType().GetProperties()) {
                         if (!property.CanWrite || !property.CanRead || property.GetIndexParameters().Length > 0 || Attribute.IsDefined(property, typeof(IgnoreDataMemberAttribute)))
                             continue;
@@ -132,14 +161,27 @@ namespace NightlyCode.Json.Writer {
                             continue;
                         
                         if (first) first = false;
-                        else writer.WriteCharacter(',');
-
+                        else {
+                            writer.WriteCharacter(',');
+                            if(options.FormatOutput)
+                                writer.WriteCharacter('\n');
+                        }
+                        
+                        if(options.FormatOutput)
+                            writer.WriteString(new string('\t', indentation));
+                        
                         writer.WriteCharacter('"');
                         options.NamingStrategy.WriteName(property.Name, writer);
                         writer.WriteCharacter('"');
                         
                         writer.WriteCharacter(':');
                         Write(value, writer);
+                    }
+
+                    if (options.FormatOutput) {
+                        writer.WriteCharacter('\n');
+                        --indentation;
+                        writer.WriteString(new string('\t', indentation));
                     }
 
                     writer.WriteCharacter('}');
@@ -150,7 +192,8 @@ namespace NightlyCode.Json.Writer {
             }
         }
 
-                /// <inheritdoc />
+        
+        /// <inheritdoc />
         public async Task WriteAsync(object data, IDataWriter writer) {
             if (data == null) {
                 await writer.WriteStringAsync("null");

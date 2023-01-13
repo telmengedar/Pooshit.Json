@@ -227,5 +227,28 @@ namespace Json.Tests {
             Assert.AreEqual("{\"Visible\":0}", result);
         }
 
+        [Test, Parallelizable]
+        public void WriteNaNasNull() {
+            string result = NightlyCode.Json.Json.WriteString(double.NaN);
+            Assert.AreEqual("null", result);
+        }
+        
+        [Test, Parallelizable]
+        public void WriteInfinityasNull() {
+            string result = NightlyCode.Json.Json.WriteString(double.PositiveInfinity);
+            Assert.AreEqual("null", result);
+        }
+        
+        [Test, Parallelizable]
+        public void WriteNegativeInfinityasNull() {
+            string result = NightlyCode.Json.Json.WriteString(double.NegativeInfinity);
+            Assert.AreEqual("null", result);
+        }
+
+        [Test, Parallelizable]
+        public void WriteAndReadBackDoubleNaN() {
+            string result = NightlyCode.Json.Json.WriteString(double.NaN);
+            double value = NightlyCode.Json.Json.Read<double>(result);
+        }
     }
 }
