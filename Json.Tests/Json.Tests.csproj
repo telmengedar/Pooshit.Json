@@ -1,11 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
 
         <IsPackable>false</IsPackable>
 
         <LangVersion>default</LangVersion>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)/GeneratedFiles</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\NightlyCode.Json\NightlyCode.Json.csproj" />
+      <ProjectReference Include="..\Pooshit.Json\Pooshit.Json.csproj" />
     </ItemGroup>
 
     <ItemGroup>

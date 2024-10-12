@@ -1,17 +1,21 @@
 ﻿using System;
+using Pooshit.Reflection;
 
-namespace Json.Tests.Data {
-    public class TestData {
-        public long Long { get; set; }
-        public TestData ChildTestData { get; set; }
-        public string String { get; set; }
-        public decimal Decimal { get; set; }
-        public int[] Array { get; set; }
+namespace Json.Tests.Data;
 
-        public Guid Guid { get; set; }
+[ReflectType]
+public class TestData {
+    public long Long { get; set; }
+    public TestData ChildTestData { get; set; }
+    public string String { get; set; }
+    public decimal Decimal { get; set; }
+    public int[] Array { get; set; }
 
-        public DayOfWeek WeekDay { get; set; }
+    public Guid Guid { get; set; }
 
-        public TestData[] ObjectArray { get; set; }
-    }
+    public DayOfWeek WeekDay { get; set; }
+
+    public TestData[] ObjectArray { get; set; }
+
+    public DateTime Date { get; set; }
 }

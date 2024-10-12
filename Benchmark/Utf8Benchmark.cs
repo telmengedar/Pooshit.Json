@@ -1,14 +1,14 @@
 ﻿using System;
 using System.IO;
+using Benchmark.Data;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
-using Json.Tests.Data;
 using Utf8Json;
 using Utf8Json.Resolvers;
 
 namespace Benchmark {
     
-    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [SimpleJob(RuntimeMoniker.Net80)]
     public class Utf8Benchmark {
         readonly IJsonFormatterResolver camelcased = StandardResolver.ExcludeNullCamelCase;
         

@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
@@ -10,12 +10,13 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+      <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
+      <PackageReference Include="System.Text.Json" Version="8.0.5" />
       <PackageReference Include="Utf8Json" Version="1.3.7" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\NightlyCode.Json\NightlyCode.Json.csproj" />
+      <ProjectReference Include="..\Pooshit.Json\Pooshit.Json.csproj" />
     </ItemGroup>
 
 </Project>

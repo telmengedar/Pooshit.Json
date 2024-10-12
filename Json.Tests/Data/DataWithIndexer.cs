@@ -1,14 +1,17 @@
-﻿namespace Json.Tests.Data {
-    public class DataWithIndexer {
-        public int this[int index] {
-            get {
-                return Number * index;
-            }
-            set {
-                
-            }
-        }
+﻿using Pooshit.Reflection;
 
-        public int Number { get; set; }
+namespace Json.Tests.Data;
+
+[ReflectType]
+public class DataWithIndexer {
+    public int this[int index] {
+        get {
+            return Number * index;
+        }
+        set {
+                
+        }
     }
+
+    public int Number { get; set; }
 }

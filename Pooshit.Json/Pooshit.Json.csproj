@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageVersion>0.3.7-preview</PackageVersion>
+        <Title>Pooshit.Json</Title>
+        <Authors>Toni Gottschall</Authors>
+        <Description>Minimalistic Json library</Description>
+        <PackageProjectUrl>https://github.com/telmengedar/NighlyCode.Json</PackageProjectUrl>
+        <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/telmengedar/NighlyCode.Json.git</RepositoryUrl>
+        <AssemblyVersion>0.3.7</AssemblyVersion>
+        <TargetFrameworks>netstandard2.0; netstandard2.1</TargetFrameworks>
+        <PackageId>Pooshit.Json</PackageId>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Pooshit.Reflection" Version="0.1.11-preview" />
+    </ItemGroup>
+</Project>
