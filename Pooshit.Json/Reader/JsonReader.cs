@@ -89,7 +89,7 @@ public class JsonReader : IJsonReader {
     }
 
     object ReadObject(Type type, IDataReader reader, ref char state) {
-        if (type == typeof(object) || typeof(IDictionary).IsAssignableFrom(type) || (type.IsGenericType && type.GetGenericTypeDefinition()==typeof(IDictionary<,>)))  {
+        if (type == typeof(object) || typeof(IDictionary).IsAssignableFrom(type) || (type.IsGenericType && typeof(IDictionary<,>).IsAssignableFrom(type.GetGenericTypeDefinition())))  {
             if (type.IsGenericType && !typeof(IDictionary<string, object>).IsAssignableFrom(type)) {
                 Type[] arguments = type.GetGenericArguments();
                 IDictionary dictionary = (IDictionary)Activator.CreateInstance(type);
@@ -108,7 +108,10 @@ public class JsonReader : IJsonReader {
                     if (state != ':')
                         throw new FormatException("Missing ':' in json dictionary");
 
-                    object value = Converter.Convert(Read(typeof(object), reader, ref state), arguments[1]);
+                    object value = Read(arguments[1], reader, ref state);
+                    
+                    if(!typeof(IDictionary).IsAssignableFrom(arguments[1]) && !(arguments[1].IsGenericType && arguments[1].GetGenericTypeDefinition()==typeof(IDictionary<,>)))
+                        value = Converter.Convert(value, arguments[1]);
                     
                     dictionary[key] = value;
 

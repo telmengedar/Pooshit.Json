@@ -260,15 +260,24 @@ public class JsonWriterTests {
                                                                                           ["test"] = new() {
                                                                                                                ["name"] = "gangolf"
                                                                                                            }
-                                                                                      }
+                                                                                      },
+                                                                         SubComplex = new() {
+                                                                                                ["test"] = new() {
+                                                                                                                     ["my"] = new() { String = "little" }
+                                                                                                                 }
+                                                                                            }
                                                                      });
             
         ArbitraryDic readback = Pooshit.Json.Json.Read<ArbitraryDic>(data);
         Assert.NotNull(readback);
         Assert.NotNull(readback.Floats);
         Assert.NotNull(readback.Subs);
+        Assert.NotNull(readback.SubComplex);
         Assert.That(readback.Subs.ContainsKey("test"));
         Assert.AreEqual(7.0f, readback.Floats["hello"]);
         Assert.AreEqual("gangolf", readback.Subs["test"]["name"]);
+        Assert.That(readback.SubComplex.ContainsKey("test"));
+        Assert.That(readback.SubComplex["test"].ContainsKey("my"));
+        Assert.AreEqual("little", readback.SubComplex["test"]["my"].String);
     }
 }

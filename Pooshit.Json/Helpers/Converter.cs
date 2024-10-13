@@ -75,7 +75,7 @@ namespace Pooshit.Json.Helpers {
         /// <param name="allownullonvaluetypes">determines whether to allow null when converting to value types. If this is set to true, the default value for the target type is returned on null</param>
         /// <returns>converted value</returns>
         public static object Convert(object value, Type targettype, bool allownullonvaluetypes = false) {
-            if(value == null || value is DBNull) {
+            if(value is null or DBNull) {
 
                 if(targettype.IsValueType && !(targettype.IsGenericType && targettype.GetGenericTypeDefinition() == typeof(Nullable<>))) {
                     if(allownullonvaluetypes)
@@ -91,7 +91,7 @@ namespace Pooshit.Json.Helpers {
             if(targettype.IsEnum)
                 return ConvertToEnum(value, targettype, allownullonvaluetypes);
 
-            Tuple<Type,Type> key = new Tuple<Type,Type>(value.GetType(), targettype);
+            Tuple<Type,Type> key = new(value.GetType(), targettype);
             if(specificconverters.TryGetValue(key, out Func<object, object> specificconverter))
                 return specificconverter(value);
 
