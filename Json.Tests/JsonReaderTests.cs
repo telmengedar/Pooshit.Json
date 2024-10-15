@@ -246,4 +246,11 @@ public class JsonReaderTests {
         TestData deserialized = Pooshit.Json.Json.Read<TestData>(data);
         Assert.AreEqual(0, deserialized.Long);
     }
+    
+    [Test, Parallelizable]
+    public void DeserializeComplexType() {
+        var deserialized = Pooshit.Json.Json.Read<Dictionary<string,Dictionary<string,TestData>>>("{}");
+        Assert.NotNull(deserialized);
+    }
+
 }

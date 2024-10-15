@@ -94,9 +94,11 @@ public class JsonReader : IJsonReader {
                 IDictionary dictionary = (IDictionary)Activator.CreateInstance(type);
                 
                 do {
-                    object key = Converter.Convert(Read(typeof(string), reader, ref state), arguments[0]);
+                    object key = Read(typeof(string), reader, ref state);
                     if (key is NoData)
                         break;
+
+                    key = Converter.Convert(key, arguments[0]);
 
                     if (state != ':') {
                         state = reader.ReadCharacter();
