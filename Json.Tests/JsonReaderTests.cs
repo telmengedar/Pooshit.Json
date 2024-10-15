@@ -253,4 +253,18 @@ public class JsonReaderTests {
         Assert.NotNull(deserialized);
     }
 
+    [Test, Parallelizable]
+    public void DeserializeComplexTypeWithData() {
+        var deserialized = Pooshit.Json.Json.Read<Dictionary<string,Dictionary<string,TestData>>>("{\"test\":{\"test\":{\"long\":7}}}");
+        Assert.NotNull(deserialized);
+        Assert.AreEqual(7, JPath.Select<long>(deserialized, "test/test/Long"));
+    }
+    
+    [Test, Parallelizable]
+    public async Task DeserializeComplexTypeWithDataAsync() {
+        var deserialized = await Pooshit.Json.Json.ReadAsync<Dictionary<string,Dictionary<string,TestData>>>("{\"test\":{\"test\":{\"long\":7}}}");
+        Assert.NotNull(deserialized);
+        Assert.AreEqual(7, JPath.Select<long>(deserialized, "test/test/Long"));
+    }
+
 }

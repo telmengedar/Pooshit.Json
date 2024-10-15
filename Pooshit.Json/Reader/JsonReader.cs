@@ -201,36 +201,76 @@ public class JsonReader : IJsonReader {
     }
 
     async Task<object> ReadObjectAsync(Type type, IDataReader reader, AsyncState state) {
-        if (type == typeof(object) || type == typeof(IDictionary) || typeof(IDictionary<string,object>).IsAssignableFrom(type)) {
-            Dictionary<string, object> dictionary = new();
+        if (type == typeof(object) || typeof(IDictionary).IsAssignableFrom(type) || (type.IsGenericType && typeof(IDictionary<,>).IsAssignableFrom(type.GetGenericTypeDefinition())))  {
+            if (type.IsGenericType && !typeof(IDictionary<string, object>).IsAssignableFrom(type)) {
+                Type[] arguments = type.GetGenericArguments();
+                IDictionary dictionary = (IDictionary)Activator.CreateInstance(type);
+                
+                do {
+                    object key = await ReadAsync(typeof(string), reader, state);
+                    if (key is NoData)
+                        break;
 
-            do {
-                object key = await ReadAsync(typeof(string), reader, state);
-                if (key is NoData)
-                    break;
-                    
-                if (state.State != ':') {
-                    state.State=await reader.ReadCharacterAsync();
-                    while (char.IsWhiteSpace(state.State))
+                    key = Converter.Convert(key, arguments[0]);
+
+                    if (state.State != ':') {
                         state.State = await reader.ReadCharacterAsync();
-                }
+                        while (char.IsWhiteSpace(state.State))
+                            state.State = await reader.ReadCharacterAsync();
+                    }
 
-                if (state.State != ':')
-                    throw new FormatException("Missing ':' in json dictionary");
+                    if (state.State != ':')
+                        throw new FormatException("Missing ':' in json dictionary");
 
-                object value = await ReadAsync(typeof(object), reader, state);
-
-                dictionary[key.ToString()] = value;
+                    object value = await ReadAsync(arguments[1], reader, state);
                     
-                if (state.State != '}' && state.State != ',') {
-                    state.State=await reader.ReadCharacterAsync();
-                    while (char.IsWhiteSpace(state.State))
-                        state.State = await reader.ReadCharacterAsync();
-                }
-            } while (state.State != eof && state.State!='}');
+                    if(!typeof(IDictionary).IsAssignableFrom(arguments[1]) && !(arguments[1].IsGenericType && arguments[1].GetGenericTypeDefinition()==typeof(IDictionary<,>)))
+                        value = Converter.Convert(value, arguments[1]);
+                    
+                    dictionary[key] = value;
 
-            state.State = eof;
-            return dictionary;
+                    if (state.State != '}' && state.State != ',') {
+                        state.State = await reader.ReadCharacterAsync();
+                        while (char.IsWhiteSpace(state.State))
+                            state.State = await reader.ReadCharacterAsync();
+                    }
+                } while (state.State != eof && state.State != '}');
+
+                state.State = eof;
+                return dictionary;
+
+            }
+            else {
+                Dictionary<string, object> dictionary = new();
+
+                do {
+                    object key = await ReadAsync(typeof(string), reader, state);
+                    if (key is NoData)
+                        break;
+
+                    if (state.State != ':') {
+                        state.State = await reader.ReadCharacterAsync();
+                        while (char.IsWhiteSpace(state.State))
+                            state.State = await reader.ReadCharacterAsync();
+                    }
+
+                    if (state.State != ':')
+                        throw new FormatException("Missing ':' in json dictionary");
+
+                    object value = await ReadAsync(typeof(object), reader, state);
+
+                    dictionary[key.ToString()] = value;
+
+                    if (state.State != '}' && state.State != ',') {
+                        state.State = await reader.ReadCharacterAsync();
+                        while (char.IsWhiteSpace(state.State))
+                            state.State = await reader.ReadCharacterAsync();
+                    }
+                } while (state.State != eof && state.State != '}');
+
+                state.State = eof;
+                return dictionary;
+            }
         }
 
         IModel model = Model.GetModel(type);
