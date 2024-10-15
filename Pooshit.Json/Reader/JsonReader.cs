@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -273,7 +272,7 @@ public class JsonReader : IJsonReader {
     }
 
     Array ReadArray(Type elementtype, IDataReader reader, ref char state) {
-        List<object> items=new();
+        List<object> items= [];
         do {
             object item = Read(elementtype, reader, ref state);
             if (item is NoData)
@@ -300,7 +299,7 @@ public class JsonReader : IJsonReader {
     }
 
     async Task<Array> ReadArrayAsync(Type elementtype, IDataReader reader, AsyncState state) {
-        List<object> items=new();
+        List<object> items= [];
         do {
             object item = await ReadAsync(elementtype, reader, state);
             if (item is NoData)
@@ -349,7 +348,7 @@ public class JsonReader : IJsonReader {
                             break;
                         case 'u':
                             reader.ReadCharacters(unicodebuffer);
-                            buffer.Append((char) int.Parse(new string(unicodebuffer), NumberStyles.HexNumber));
+                            buffer.Append((char) int.Parse(new(unicodebuffer), NumberStyles.HexNumber));
                             break;
                         case '\"':
                             buffer.Append(state);
@@ -421,7 +420,7 @@ public class JsonReader : IJsonReader {
             if (char.IsWhiteSpace(state))
                 continue;
 
-            if (state == '}' || state == ']' || state == ',' || state== eof)
+            if (state is '}' or ']' or ',' or eof)
                 break;
                 
             buffer.Append(state);
@@ -438,7 +437,7 @@ public class JsonReader : IJsonReader {
         if (type == typeof(double) && typedvalue == null)
             return double.NaN;
         if (type != typeof(object))
-            typedvalue = Converter.Convert(typedvalue, type);
+            typedvalue = Converter.Convert(typedvalue, type, true);
         return typedvalue;
     }
 

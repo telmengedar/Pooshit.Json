@@ -239,4 +239,11 @@ public class JsonReaderTests {
         int value = await Pooshit.Json.Json.ReadAsync<int>(json);
         Assert.AreEqual(value, 1);
     }
+
+    [Test, Parallelizable]
+    public void IgnoreNullFields() {
+        string data = "{\"long\":null}";
+        TestData deserialized = Pooshit.Json.Json.Read<TestData>(data);
+        Assert.AreEqual(0, deserialized.Long);
+    }
 }
