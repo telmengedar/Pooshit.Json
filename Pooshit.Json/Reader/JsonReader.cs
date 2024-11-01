@@ -484,12 +484,12 @@ public class JsonReader : IJsonReader {
     }
 
     object ToValue(string data) {
-        if (data.All(char.IsDigit))
+        if (data.All(c => char.IsDigit(c) || c == '-'))
             return long.Parse(data, CultureInfo.InvariantCulture);
 
         return double.Parse(data, CultureInfo.InvariantCulture);
     }
-        
+
     async Task<object> ReadValueAsync(Type type, IDataReader reader, AsyncState state) {
         buffer.Length = 0;
         buffer.Append(state.State);

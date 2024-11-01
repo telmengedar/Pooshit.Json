@@ -267,4 +267,9 @@ public class JsonReaderTests {
         Assert.AreEqual(7, JPath.Select<long>(deserialized, "test/test/Long"));
     }
 
+    [Test, Parallelizable]
+    public void NegativeIsReadAsLong() {
+        object deserialized = Pooshit.Json.Json.Read("-823");
+        Assert.That(deserialized is long);
+    }
 }
