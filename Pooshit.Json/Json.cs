@@ -98,7 +98,7 @@ namespace Pooshit.Json {
         /// <param name="target">stream to write json to</param>
         /// <param name="options">options used to modify json result</param>
         public static void Write(object data, Stream target, JsonOptions options) {
-            using StreamWriter streamwriter = new StreamWriter(target, options.Encoding ?? Encoding.UTF8, 1024, true);
+            using StreamWriter streamwriter = new(target, options.Encoding ?? new UTF8Encoding(false), 1024, true);
             new JsonWriter(options).Write(data, new DataWriter(streamwriter));
         }
 
@@ -122,7 +122,7 @@ namespace Pooshit.Json {
 #if NETSTANDARD2_1
             await
 #endif
-            using StreamWriter streamwriter = new StreamWriter(target, options.Encoding ?? Encoding.UTF8, 1024, true);
+            using StreamWriter streamwriter = new(target, options.Encoding ?? new UTF8Encoding(false), 1024, true);
             await WriteAsync(data, streamwriter, options);
 #if !NETSTANDARD2_1
             await streamwriter.FlushAsync();

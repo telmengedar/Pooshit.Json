@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Json.Tests.Data;
 using NUnit.Framework;
+using Pooshit.Json;
 
 namespace Json.Tests;
 
@@ -279,5 +281,16 @@ public class JsonWriterTests {
         Assert.That(readback.SubComplex.ContainsKey("test"));
         Assert.That(readback.SubComplex["test"].ContainsKey("my"));
         Assert.AreEqual("little", readback.SubComplex["test"]["my"].String);
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteObjectAsyncNoBOM() {
+        MemoryStream ms = new();
+        await Pooshit.Json.Json.WriteAsync(new TestData {
+                                                            String = "lol"
+                                                        }, ms, JsonOptions.RestApi);
+
+        byte[] data = ms.ToArray();
+        Assert.AreEqual(123, data[0]);
     }
 }
