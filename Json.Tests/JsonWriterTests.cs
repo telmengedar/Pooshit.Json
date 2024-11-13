@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Json.Tests.Data;
 using NUnit.Framework;
@@ -12,7 +11,14 @@ namespace Json.Tests;
 
 [TestFixture, Parallelizable]
 public class JsonWriterTests {
-
+    async IAsyncEnumerable<string> GenerateAsyncEnumerable() {
+        yield return "hello";
+        await Task.Yield();
+        yield return "bamm";
+        yield return "bumm";
+    }
+    
+    
     [TestCase(1, "1")]
     [TestCase(8L, "8")]
     [TestCase(9.98, "9.98")]
@@ -311,6 +317,15 @@ public class JsonWriterTests {
 
         byte[] data = ms.ToArray();
         CollectionAssert.AreEqual("[3,8,0,1]"u8.ToArray(), data);
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteAsyncEnumerableFromMethod() {
+        MemoryStream ms = new();
+        await Pooshit.Json.Json.WriteAsync(GenerateAsyncEnumerable(), ms, JsonOptions.RestApi);
+
+        byte[] data = ms.ToArray();
+        CollectionAssert.AreEqual("[\"hello\",\"bamm\",\"bumm\"]"u8.ToArray(), data);
     }
 
 }

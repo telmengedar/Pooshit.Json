@@ -224,16 +224,13 @@ public class JsonWriter : IJsonWriter {
         if(data.IsAsyncEnumerable()) {
             await writer.WriteCharacterAsync('[');
             bool first = true;
-            MethodInfo enumeratorInfo = data.GetType().GetMethod("GetAsyncEnumerator");
-            object enumerator = enumeratorInfo?.Invoke(data, [default(CancellationToken)]);
+            Tuple<IAsyncDisposable, MethodInfo, PropertyInfo> enumerator = data.GetAsyncEnumerator();
             if (enumerator != null) {
-                MethodInfo moveNextAsync = enumerator.GetType().GetMethod("MoveNextAsync");
-                PropertyInfo getCurrent = enumerator.GetType().GetProperty("Current");
-                if (moveNextAsync != null && getCurrent != null) {
-                    while (await (ValueTask<bool>)moveNextAsync.Invoke(enumerator, null)) {
+                await using (enumerator.Item1) {
+                    while (await (ValueTask<bool>)enumerator.Item2.Invoke(enumerator.Item1, null)) {
                         if (first) first = false;
                         else await writer.WriteCharacterAsync(',');
-                        await WriteAsync(getCurrent.GetValue(enumerator), writer);
+                        await WriteAsync(enumerator.Item3.GetValue(enumerator.Item1), writer);
                     }
                 }
             }
