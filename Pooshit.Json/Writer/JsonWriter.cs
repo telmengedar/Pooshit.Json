@@ -3,8 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
+using Pooshit.Json.Extensions;
 using Pooshit.Json.Models;
 using Pooshit.Reflection;
 using Model = Pooshit.Json.Models.Model;
@@ -60,7 +63,7 @@ public class JsonWriter : IJsonWriter {
                 }
 
                 if(options.FormatOutput)
-                    writer.WriteString(new string('\t', indentation));
+                    writer.WriteString(new('\t', indentation));
 
                 Write(entry.Key.ToString(), writer);
                 writer.WriteCharacter(':');
@@ -217,7 +220,30 @@ public class JsonWriter : IJsonWriter {
             return;
         }
 
-        if (!(data is string) && data is IEnumerable array) {
+#if NETSTANDARD2_1
+        if(data.IsAsyncEnumerable()) {
+            await writer.WriteCharacterAsync('[');
+            bool first = true;
+            MethodInfo enumeratorInfo = data.GetType().GetMethod("GetAsyncEnumerator");
+            object enumerator = enumeratorInfo?.Invoke(data, [default(CancellationToken)]);
+            if (enumerator != null) {
+                MethodInfo moveNextAsync = enumerator.GetType().GetMethod("MoveNextAsync");
+                PropertyInfo getCurrent = enumerator.GetType().GetProperty("Current");
+                if (moveNextAsync != null && getCurrent != null) {
+                    while (await (ValueTask<bool>)moveNextAsync.Invoke(enumerator, null)) {
+                        if (first) first = false;
+                        else await writer.WriteCharacterAsync(',');
+                        await WriteAsync(getCurrent.GetValue(enumerator), writer);
+                    }
+                }
+            }
+
+            await writer.WriteCharacterAsync(']');
+            return;
+        }
+#endif
+
+        if (data is not string && data is IEnumerable array) {
             await writer.WriteCharacterAsync('[');
             bool first = true;
             foreach (object item in array) {
@@ -228,7 +254,7 @@ public class JsonWriter : IJsonWriter {
             await writer.WriteCharacterAsync(']');
             return;
         }
-            
+        
         if (data.GetType().IsEnum) {
             if (options.WriteEnumsAsStrings)
                 data = data.ToString();

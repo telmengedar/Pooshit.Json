@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Json.Tests.Data;
 using NUnit.Framework;
@@ -293,4 +294,23 @@ public class JsonWriterTests {
         byte[] data = ms.ToArray();
         Assert.AreEqual(123, data[0]);
     }
+    
+    [Test, Parallelizable]
+    public async Task WriteEmptyAsyncEnumerable() {
+        MemoryStream ms = new();
+        await Pooshit.Json.Json.WriteAsync(AsyncEnumerable.Empty<int>(), ms, JsonOptions.RestApi);
+
+        byte[] data = ms.ToArray();
+        CollectionAssert.AreEqual("[]"u8.ToArray(), data);
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteFilledAsyncEnumerable() {
+        MemoryStream ms = new();
+        await Pooshit.Json.Json.WriteAsync(new[]{3,8,0,1}.ToAsyncEnumerable(), ms, JsonOptions.RestApi);
+
+        byte[] data = ms.ToArray();
+        CollectionAssert.AreEqual("[3,8,0,1]"u8.ToArray(), data);
+    }
+
 }
