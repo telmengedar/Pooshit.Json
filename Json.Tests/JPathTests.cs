@@ -223,4 +223,13 @@ public class JPathTests {
         int[] numbers = [1, 2, 3, 4, 5];
         Assert.AreEqual(3, JPath.Select<int>(numbers, "[2]"));
     }
+    
+    [Test, Parallelizable]
+    public void SetPropertyIgnoreCase() {
+        PropertyData data = new();
+        
+        JPath.Set(data, "magiccamel", 7, true);
+        Assert.AreEqual(7, data.MagicCamel);
+    }
+
 }

@@ -7,9 +7,9 @@
         <Title>Pooshit.Json</Title>
         <Authors>Toni Gottschall</Authors>
         <Description>Minimalistic Json library</Description>
-        <PackageProjectUrl>https://github.com/telmengedar/NighlyCode.Json</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/telmengedar/Pooshit.Json</PackageProjectUrl>
         <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
-        <RepositoryUrl>https://github.com/telmengedar/NighlyCode.Json.git</RepositoryUrl>
+        <RepositoryUrl>https://github.com/telmengedar/Pooshit.Json.git</RepositoryUrl>
         <AssemblyVersion>0.3.17</AssemblyVersion>
         <TargetFrameworks>netstandard2.0; netstandard2.1</TargetFrameworks>
         <PackageId>Pooshit.Json</PackageId>

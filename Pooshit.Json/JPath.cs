@@ -194,7 +194,7 @@ public static class JPath {
 
         return data != null;
     }
-       
+
     /// <summary>
     /// set a value to a structure
     /// </summary>
@@ -202,6 +202,17 @@ public static class JPath {
     /// <param name="path">path where to set value</param>
     /// <param name="value">value to set</param>
     public static void Set(object data, string path, object value) {
+        Set(data, path, value, false);
+    }
+
+    /// <summary>
+    /// set a value to a structure
+    /// </summary>
+    /// <param name="data">host structure</param>
+    /// <param name="path">path where to set value</param>
+    /// <param name="value">value to set</param>
+    /// <param name="ignoreCase">determines whether to ignore casing when setting existing properties</param>
+    public static void Set(object data, string path, object value, bool ignoreCase) {
         if (data == null)
             throw new ArgumentNullException(nameof(data), "base structure needs to be non null");
             
@@ -233,15 +244,36 @@ public static class JPath {
             }
             else {
                 if (data is IDictionary dictionary) {
-                    if (!dictionary.Contains(token.Property)) {
-                        if (tokens[i + 1].Index.HasValue)
-                            dictionary[token.Property] = data = new List<object>();
-                        else dictionary[token.Property] = data = new Dictionary<string, object>();
+                    if (ignoreCase) {
+                        object key = dictionary.Keys
+                                               .Cast<object>()
+                                               .FirstOrDefault(k => string.Compare(k?.ToString(), token.Property, StringComparison.InvariantCultureIgnoreCase) == 0);
+
+                        if (key == null) {
+                            if (tokens[i + 1].Index.HasValue)
+                                dictionary[token.Property] = data = new List<object>();
+                            else dictionary[token.Property] = data = new Dictionary<string, object>();
+                        }
+                        else {
+                            if (tokens[i + 1].Index.HasValue)
+                                dictionary[key] = data = new List<object>();
+                            else dictionary[key] = data = new Dictionary<string, object>();
+                        }
                     }
-                    else data = dictionary[token.Property];
+                    else {
+                        if (!dictionary.Contains(token.Property)) {
+                            if (tokens[i + 1].Index.HasValue)
+                                dictionary[token.Property] = data = new List<object>();
+                            else dictionary[token.Property] = data = new Dictionary<string, object>();
+                        }
+                        else data = dictionary[token.Property];
+                    }
                 }
                 else {
-                    PropertyInfo property = data.GetType().GetProperty(token.Property);
+                    BindingFlags flags = BindingFlags.Instance | BindingFlags.Public;
+                    if(ignoreCase) flags |= BindingFlags.IgnoreCase;
+                    
+                    PropertyInfo property = data.GetType().GetProperty(token.Property, flags);
                     if (property == null)
                         throw new ArgumentException($"Property '{token.Property}' not found in object");
                         
@@ -267,10 +299,22 @@ public static class JPath {
         }
         else {
             if (data is IDictionary dictionary) {
-                dictionary[hostToken.Property] = value;
+                if (ignoreCase) {
+                    object key = dictionary.Keys
+                                           .Cast<object>()
+                                           .FirstOrDefault(k => string.Compare(k?.ToString(), hostToken.Property, StringComparison.InvariantCultureIgnoreCase) == 0);
+
+                    if (key == null)
+                        dictionary[hostToken.Property] = data;
+                    else dictionary[key] = data;
+                }
+                else dictionary[hostToken.Property] = value;
             }
             else {
-                PropertyInfo property = data.GetType().GetProperty(hostToken.Property);
+                BindingFlags flags = BindingFlags.Instance | BindingFlags.Public;
+                if(ignoreCase) flags |= BindingFlags.IgnoreCase;
+
+                PropertyInfo property = data.GetType().GetProperty(hostToken.Property, flags);
                 if (property == null)
                     throw new ArgumentException($"Property '{hostToken.Property}' not found in object");
 
