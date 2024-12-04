@@ -217,4 +217,10 @@ public class JPathTests {
         Assert.AreEqual(7, JPath.Select(data, "configuration/values[0]/lhs"));
         Assert.AreEqual(9, JPath.Select(data, "configuration/values[0]/rhs"));
     }
+
+    [Test, Parallelizable]
+    public void AccessHostByIndex() {
+        int[] numbers = [1, 2, 3, 4, 5];
+        Assert.AreEqual(3, JPath.Select<int>(numbers, "[2]"));
+    }
 }

@@ -313,13 +313,13 @@ public static class JPath {
 
                         break;
                         case '[':
-                            if (name.Length == 0)
-                                throw new InvalidOperationException("Indexer without property");
-                                
-                            yield return new() {
-                                Property = name.ToString()
-                            };
-                            name.Length = 0;
+                            if (name.Length != 0) {
+                                yield return new() {
+                                    Property = name.ToString()
+                                };
+                                name.Length = 0;
+                            }
+
                             parseMode = 1;
                         break;
                         default:
