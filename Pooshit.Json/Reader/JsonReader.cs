@@ -22,7 +22,7 @@ public class JsonReader : IJsonReader {
     /// <inheritdoc />
     public object Read(Type type, IDataReader reader) {
         char state = eof;
-        return Converter.Convert(Read(type, reader, ref state), type);
+        return Converter.Convert(Read(type, reader, ref state), type, true);
     }
 
     public async Task<object> ReadAsync(Type type, IDataReader reader) {
@@ -30,7 +30,7 @@ public class JsonReader : IJsonReader {
                                      State = eof
                                  };
 
-        return Converter.Convert(await ReadAsync(type, reader, state), type);
+        return Converter.Convert(await ReadAsync(type, reader, state), type, true);
     }
 
     object Read(Type type, IDataReader reader, ref char state) {
@@ -112,7 +112,7 @@ public class JsonReader : IJsonReader {
                     object value = Read(arguments[1], reader, ref state);
                     
                     if(!typeof(IDictionary).IsAssignableFrom(arguments[1]) && !(arguments[1].IsGenericType && arguments[1].GetGenericTypeDefinition()==typeof(IDictionary<,>)))
-                        value = Converter.Convert(value, arguments[1]);
+                        value = Converter.Convert(value, arguments[1], true);
                     
                     dictionary[key] = value;
 
@@ -185,7 +185,7 @@ public class JsonReader : IJsonReader {
             else{
                 object value = Read(property.PropertyType, reader, ref state);
                 if (value != null && value.GetType() != property.PropertyType)
-                    value = Converter.Convert(value, property.PropertyType);
+                    value = Converter.Convert(value, property.PropertyType, true);
                 property.SetValue(result, value);
             }
 
@@ -225,7 +225,7 @@ public class JsonReader : IJsonReader {
                     object value = await ReadAsync(arguments[1], reader, state);
                     
                     if(!typeof(IDictionary).IsAssignableFrom(arguments[1]) && !(arguments[1].IsGenericType && arguments[1].GetGenericTypeDefinition()==typeof(IDictionary<,>)))
-                        value = Converter.Convert(value, arguments[1]);
+                        value = Converter.Convert(value, arguments[1], true);
                     
                     dictionary[key] = value;
 
@@ -298,7 +298,7 @@ public class JsonReader : IJsonReader {
             else{
                 object value = await ReadAsync(property.PropertyType, reader, state);
                 if (value != null && value.GetType() != property.PropertyType)
-                    value = Converter.Convert(value, property.PropertyType);
+                    value = Converter.Convert(value, property.PropertyType, true);
                 property.SetValue(result, value);
             }
 
@@ -332,7 +332,7 @@ public class JsonReader : IJsonReader {
         for (int i = 0; i < items.Count; ++i) {
             object item = items[i];
             if (item != null && item.GetType() != elementtype)
-                item = Converter.Convert(item, elementtype);
+                item = Converter.Convert(item, elementtype, true);
             result.SetValue(item, i);
         }
 
@@ -359,7 +359,7 @@ public class JsonReader : IJsonReader {
         for (int i = 0; i < items.Count; ++i) {
             object item = items[i];
             if (item != null && item.GetType() != elementtype)
-                item = Converter.Convert(item, elementtype);
+                item = Converter.Convert(item, elementtype, true);
             result.SetValue(item, i);
         }
 
@@ -499,7 +499,7 @@ public class JsonReader : IJsonReader {
             if (char.IsWhiteSpace(state.State))
                 continue;
 
-            if (state.State == '}' || state.State == ']' || state.State == ',' || state.State== eof)
+            if (state.State is '}' or ']' or ',' or eof)
                 break;
                 
             buffer.Append(state.State);
@@ -514,7 +514,7 @@ public class JsonReader : IJsonReader {
                             };
 
         if (type != typeof(object))
-            typedvalue = Converter.Convert(typedvalue, type);
+            typedvalue = Converter.Convert(typedvalue, type, true);
         return typedvalue;
     }
 
