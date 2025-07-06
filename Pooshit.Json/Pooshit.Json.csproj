@@ -3,14 +3,14 @@
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageVersion>0.3.19-preview</PackageVersion>
+        <PackageVersion>0.3.25-preview</PackageVersion>
         <Title>Pooshit.Json</Title>
         <Authors>Toni Gottschall</Authors>
         <Description>Minimalistic Json library</Description>
         <PackageProjectUrl>https://github.com/telmengedar/Pooshit.Json</PackageProjectUrl>
         <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/telmengedar/Pooshit.Json.git</RepositoryUrl>
-        <AssemblyVersion>0.3.19</AssemblyVersion>
+        <AssemblyVersion>0.3.25</AssemblyVersion>
         <TargetFrameworks>netstandard2.0; netstandard2.1</TargetFrameworks>
         <PackageId>Pooshit.Json</PackageId>
         <Company />

@@ -34,6 +34,22 @@ public class JsonWriterTests {
     }
 
     [Test, Parallelizable]
+    public void StripBinary() {
+        string result = Pooshit.Json.Json.WriteString(new byte[] { 1, 2, 3 }, new() {
+            ByteArrayBehavior = ByteArrayBehavior.Strip
+        });
+        Assert.AreEqual("null", result);
+    }
+
+    [Test, Parallelizable]
+    public void WriteBinaryAsBase64() {
+        string result = Pooshit.Json.Json.WriteString(new byte[] { 1, 2, 3 }, new() {
+            ByteArrayBehavior = ByteArrayBehavior.Base64
+        });
+        Assert.AreEqual("\"AQID\"", result);
+    }
+
+    [Test, Parallelizable]
     public void WriteDateTime() {
         string result = Pooshit.Json.Json.WriteString(new DateTime(2020, 12, 31));
         Assert.AreEqual("\"2020-12-31T00:00:00.0000000\"", result);

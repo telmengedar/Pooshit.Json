@@ -36,6 +36,11 @@ public struct JsonOptions {
     /// encoding to use when reading or writing json
     /// </summary>
     public Encoding Encoding { get; set; }
+
+    /// <summary>
+    /// removes byte arrays from output
+    /// </summary>
+    public ByteArrayBehavior ByteArrayBehavior { get; set; }
         
     /// <summary>
     /// default settings used when writing json

@@ -74,6 +74,18 @@ public class JsonWriter : IJsonWriter {
         }
 
         if (!(data is string) && data is IEnumerable array) {
+            if (data is byte[] binary && options.ByteArrayBehavior!=ByteArrayBehavior.Keep) {
+                switch (options.ByteArrayBehavior) {
+                    case ByteArrayBehavior.Strip:
+                        Write(null, writer);
+                    break;
+                    case ByteArrayBehavior.Base64:
+                        Write(Convert.ToBase64String(binary), writer);
+                    break;
+                }
+                return;
+            }
+            
             writer.WriteCharacter('[');
             bool first = true;
             foreach (object item in array) {
