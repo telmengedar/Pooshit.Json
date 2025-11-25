@@ -18,4 +18,6 @@ public class TestData {
     public TestData[] ObjectArray { get; set; }
 
     public DateTime Date { get; set; }
+
+    public byte[] Binary { get; set; }
 }

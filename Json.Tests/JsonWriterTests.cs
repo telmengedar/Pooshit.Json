@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Json.Tests.Data;
 using NUnit.Framework;
 using Pooshit.Json;
+using Pooshit.Json.Writer.Naming;
 
 namespace Json.Tests;
 
@@ -42,11 +43,55 @@ public class JsonWriterTests {
     }
 
     [Test, Parallelizable]
+    public void StripBinaryInDictionary() {
+        string result = Pooshit.Json.Json.WriteString(new Dictionary<string, object> {
+            ["prop"]=new byte[] { 1, 2, 3 }
+        }, new() {
+            ByteArrayBehavior = ByteArrayBehavior.Strip
+        });
+        Assert.AreEqual("{\"prop\":null}", result);
+    }
+
+    [Test, Parallelizable]
+    public void StripBinaryInObject() {
+        string result = Pooshit.Json.Json.WriteString(new TestData {
+            Binary= [1, 2, 3]
+        }, new() {
+            ByteArrayBehavior = ByteArrayBehavior.Strip
+        });
+        Assert.That(result.Contains("\"Binary\":null"));
+    }
+
+    [Test, Parallelizable]
     public void WriteBinaryAsBase64() {
         string result = Pooshit.Json.Json.WriteString(new byte[] { 1, 2, 3 }, new() {
             ByteArrayBehavior = ByteArrayBehavior.Base64
         });
         Assert.AreEqual("\"AQID\"", result);
+    }
+
+    [Test, Parallelizable]
+    public void ReadBase64AsBinaryInObject() {
+        string structure = Pooshit.Json.Json.WriteString(new TestData {
+            Binary = [1, 2, 3]
+        }, new() {
+            NamingStrategy = new CamelCaseNamingStrategy(),
+            ByteArrayBehavior = ByteArrayBehavior.Base64
+        });
+
+        Assert.That(structure.Contains("\"AQID\""));
+        TestData testObject = Pooshit.Json.Json.Read<TestData>(structure);
+        Assert.That(testObject.Binary, Is.EquivalentTo(new byte[] { 1, 2, 3 }));
+    }
+
+    [Test, Parallelizable]
+    public void ReadBase64AsBinary() {
+        string b64 = Pooshit.Json.Json.WriteString(new byte[] { 1, 2, 3 }, new() {
+            ByteArrayBehavior = ByteArrayBehavior.Base64
+        });
+
+        byte[] byteArray = Pooshit.Json.Json.Read<byte[]>(b64);
+        Assert.That(byteArray, Is.EquivalentTo(new byte[] { 1, 2, 3 }));
     }
 
     [Test, Parallelizable]
@@ -344,4 +389,14 @@ public class JsonWriterTests {
         CollectionAssert.AreEqual("[\"hello\",\"bamm\",\"bumm\"]"u8.ToArray(), data);
     }
 
+    [Test, Parallelizable]
+    public async Task WriteDictionaryUsesOptions() {
+        Dictionary<string, object> dic = new() {
+            ["Null"] = null,
+            ["CamelCase"] = "hello"
+        };
+
+        string result = Pooshit.Json.Json.WriteString(dic, JsonOptions.RestApi);
+        Assert.That(result, Is.EqualTo("{\"camelCase\":\"hello\"}"));
+    }
 }

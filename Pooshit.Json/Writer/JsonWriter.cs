@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Pooshit.Json.Extensions;
 using Pooshit.Json.Models;
+using Pooshit.Json.Writer.Naming;
 using Pooshit.Reflection;
 using Model = Pooshit.Json.Models.Model;
 
@@ -35,6 +36,7 @@ public class JsonWriter : IJsonWriter {
     /// <param name="options">options used to modify behavior</param>
     public JsonWriter(JsonOptions options) {
         this.options = options;
+        this.options.NamingStrategy ??= new DefaultNamingStrategy();
     }
 
     /// <inheritdoc />
@@ -55,6 +57,9 @@ public class JsonWriter : IJsonWriter {
             }
 
             foreach (DictionaryEntry entry in dictionary) {
+                if (entry.Value == null && options.ExcludeNullProperties)
+                    continue;
+
                 if (first) first = false;
                 else {
                     writer.WriteCharacter(',');
@@ -65,7 +70,10 @@ public class JsonWriter : IJsonWriter {
                 if(options.FormatOutput)
                     writer.WriteString(new('\t', indentation));
 
-                Write(entry.Key.ToString(), writer);
+                writer.WriteCharacter('"');
+                options.NamingStrategy.WriteName(entry.Key.ToString(), writer);
+                writer.WriteCharacter('"');
+                
                 writer.WriteCharacter(':');
                 Write(entry.Value, writer);
             }
@@ -185,7 +193,7 @@ public class JsonWriter : IJsonWriter {
                         }
                         
                         if(options.FormatOutput)
-                            writer.WriteString(new string('\t', indentation));
+                            writer.WriteString(new('\t', indentation));
                         
                         writer.WriteCharacter('"');
                         options.NamingStrategy.WriteName(property.Name, writer);
