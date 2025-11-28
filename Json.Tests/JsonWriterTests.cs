@@ -399,4 +399,15 @@ public class JsonWriterTests {
         string result = Pooshit.Json.Json.WriteString(dic, JsonOptions.RestApi);
         Assert.That(result, Is.EqualTo("{\"camelCase\":\"hello\"}"));
     }
+
+    [Test, Parallelizable]
+    public async Task CamelCaseLowerCamelToo()
+    {
+        Dictionary<string, object> dic = new() {
+            ["camelCase"] = "hello"
+        };
+        
+        string result = Pooshit.Json.Json.WriteString(dic, JsonOptions.RestApi);
+        Assert.That(result, Is.EqualTo("{\"camelCase\":\"hello\"}"));
+    }
 }
