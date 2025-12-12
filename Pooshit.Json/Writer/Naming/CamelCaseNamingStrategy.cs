@@ -17,8 +17,13 @@ namespace Pooshit.Json.Writer.Naming {
                 break;
             }
 
-            if (index <= 0)
-                return name.ToLower();
+            switch (index)
+            {
+                case -1:
+                    return name.ToLower();
+                case 0:
+                    return name;
+            }
             return $"{name.Substring(0, index).ToLower()}{name.Substring(index, name.Length - index)}";
         }
 

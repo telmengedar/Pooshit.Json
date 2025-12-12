@@ -67,10 +67,11 @@ public struct JsonOptions {
     /// obviously these are are defaults for pooshit apis and others could
     /// totally have different defaults
     /// </remarks>
-    public static JsonOptions RestApi => new() {
-                                                   NamingStrategy = NamingStrategies.CamelCase,
-                                                   ExcludeNullProperties = true,
-                                                   Encoding = new UTF8Encoding(false),
-                                                   WriteEnumsAsStrings = true
-                                               };
+    public static JsonOptions RestApi => new()
+    {
+        NamingStrategy = NamingStrategies.CamelCase,
+        ExcludeNullProperties = true,
+        Encoding = new UTF8Encoding(false),
+        WriteEnumsAsStrings = true
+    };
 }
