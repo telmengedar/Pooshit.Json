@@ -113,12 +113,12 @@ public class JsonWriter : IJsonWriter {
 
         if (data is TimeSpan span)
             data = span.ToString("c", CultureInfo.InvariantCulture);
-            
+
         switch (Type.GetTypeCode(data.GetType())) {
             case TypeCode.Boolean:
-                if ((bool) data) writer.WriteString("true");
+                if ((bool)data) writer.WriteString("true");
                 else writer.WriteString("false");
-                break;
+            break;
             case TypeCode.SByte:
             case TypeCode.Byte:
             case TypeCode.Int16:
@@ -129,38 +129,38 @@ public class JsonWriter : IJsonWriter {
             case TypeCode.UInt64:
             case TypeCode.Decimal:
                 writer.WriteString(Convert.ToString(data, CultureInfo.InvariantCulture));
-                break;
+            break;
             case TypeCode.Single:
                 if (float.IsNaN((float)data) || float.IsInfinity((float)data))
                     writer.WriteString("null");
                 else writer.WriteString(Convert.ToString(data, CultureInfo.InvariantCulture));
-                break;
+            break;
             case TypeCode.Double:
                 if (double.IsNaN((double)data) || double.IsInfinity((double)data))
                     writer.WriteString("null");
                 else writer.WriteString(Convert.ToString(data, CultureInfo.InvariantCulture));
-                break;
+            break;
             case TypeCode.Empty:
             case TypeCode.DBNull:
                 writer.WriteString("null");
-                break;
+            break;
             case TypeCode.Char:
                 writer.WriteCharacter('"');
-                WriteEscapeValue((char) data, writer);
+                WriteEscapeValue((char)data, writer);
                 writer.WriteCharacter('"');
-                break;
+            break;
             case TypeCode.DateTime:
-                string datestring = ((DateTime) data).ToString("o", CultureInfo.InvariantCulture);
+                string datestring = ((DateTime)data).ToString("o", CultureInfo.InvariantCulture);
                 writer.WriteCharacter('"');
                 writer.WriteString(datestring);
                 writer.WriteCharacter('"');
-                break;
+            break;
             case TypeCode.String:
                 writer.WriteCharacter('"');
-                foreach (char character in (string) data)
+                foreach (char character in (string)data)
                     WriteEscapeValue(character, writer);
                 writer.WriteCharacter('"');
-                break;
+            break;
             case TypeCode.Object:
                 if (stringtypes.Contains(data.GetType())) {
                     writer.WriteCharacter('"');
@@ -173,32 +173,32 @@ public class JsonWriter : IJsonWriter {
                     if (options.FormatOutput) {
                         ++indentation;
                         writer.WriteCharacter('\n');
-                        
+
                     }
 
                     IModel model = Model.GetModel(data.GetType());
                     foreach (IPropertyInfo property in model.Properties) {
-                        if (!property.HasSetter || !property.HasGetter || property.Attributes.Any(a=>a is IgnoreDataMemberAttribute))
+                        if (!property.HasSetter || !property.HasGetter || property.Attributes.Any(a => a is IgnoreDataMemberAttribute))
                             continue;
 
                         object value = property.GetValue(data);
                         if (value == null && options.ExcludeNullProperties)
                             continue;
-                        
+
                         if (first) first = false;
                         else {
                             writer.WriteCharacter(',');
-                            if(options.FormatOutput)
+                            if (options.FormatOutput)
                                 writer.WriteCharacter('\n');
                         }
-                        
-                        if(options.FormatOutput)
+
+                        if (options.FormatOutput)
                             writer.WriteString(new('\t', indentation));
-                        
+
                         writer.WriteCharacter('"');
                         options.NamingStrategy.WriteName(property.Name, writer);
                         writer.WriteCharacter('"');
-                        
+
                         writer.WriteCharacter(':');
                         Write(value, writer);
                     }
@@ -206,12 +206,13 @@ public class JsonWriter : IJsonWriter {
                     if (options.FormatOutput) {
                         writer.WriteCharacter('\n');
                         --indentation;
-                        writer.WriteString(new string('\t', indentation));
+                        writer.WriteString(new('\t', indentation));
                     }
 
                     writer.WriteCharacter('}');
                 }
-                break;
+
+            break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -229,10 +230,16 @@ public class JsonWriter : IJsonWriter {
             await writer.WriteCharacterAsync('{');
             bool first = true;
             foreach (DictionaryEntry entry in dictionary) {
+                if (entry.Value == null && options.ExcludeNullProperties)
+                    continue;
+
                 if (first) first = false;
                 else await writer.WriteCharacterAsync(',');
                     
-                await WriteAsync(entry.Key.ToString(), writer);
+                await writer.WriteCharacterAsync('"');
+                await options.NamingStrategy.WriteNameAsync(entry.Key.ToString(), writer);
+                await writer.WriteCharacterAsync('"');
+
                 await writer.WriteCharacterAsync(':');
                 await WriteAsync(entry.Value, writer);
             }
@@ -283,9 +290,9 @@ public class JsonWriter : IJsonWriter {
 
         switch (Type.GetTypeCode(data.GetType())) {
             case TypeCode.Boolean:
-                if ((bool) data) await writer.WriteStringAsync("true");
+                if ((bool)data) await writer.WriteStringAsync("true");
                 else await writer.WriteStringAsync("false");
-                break;
+            break;
             case TypeCode.SByte:
             case TypeCode.Byte:
             case TypeCode.Int16:
@@ -298,28 +305,28 @@ public class JsonWriter : IJsonWriter {
             case TypeCode.Single:
             case TypeCode.Double:
                 await writer.WriteStringAsync(Convert.ToString(data, CultureInfo.InvariantCulture));
-                break;
+            break;
             case TypeCode.Empty:
             case TypeCode.DBNull:
                 await writer.WriteStringAsync("null");
-                break;
+            break;
             case TypeCode.Char:
                 await writer.WriteCharacterAsync('"');
-                await WriteEscapeValueAsync((char) data, writer);
+                await WriteEscapeValueAsync((char)data, writer);
                 await writer.WriteCharacterAsync('"');
-                break;
+            break;
             case TypeCode.DateTime:
-                string datestring = ((DateTime) data).ToString("o", CultureInfo.InvariantCulture);
+                string datestring = ((DateTime)data).ToString("o", CultureInfo.InvariantCulture);
                 await writer.WriteCharacterAsync('"');
                 await writer.WriteStringAsync(datestring);
                 await writer.WriteCharacterAsync('"');
-                break;
+            break;
             case TypeCode.String:
                 await writer.WriteCharacterAsync('"');
-                foreach (char character in (string) data)
+                foreach (char character in (string)data)
                     await WriteEscapeValueAsync(character, writer);
                 await writer.WriteCharacterAsync('"');
-                break;
+            break;
             case TypeCode.Object:
                 if (stringtypes.Contains(data.GetType())) {
                     await writer.WriteCharacterAsync('"');
@@ -332,27 +339,28 @@ public class JsonWriter : IJsonWriter {
 
                     IModel model = Model.GetModel(data.GetType());
                     foreach (IPropertyInfo property in model.Properties) {
-                        if (!property.HasSetter || !property.HasGetter || property.Attributes.Any(a=>a is IgnoreDataMemberAttribute))
+                        if (!property.HasSetter || !property.HasGetter || property.Attributes.Any(a => a is IgnoreDataMemberAttribute))
                             continue;
 
                         object value = property.GetValue(data);
                         if (value == null && options.ExcludeNullProperties)
                             continue;
-                        
+
                         if (first) first = false;
                         else await writer.WriteCharacterAsync(',');
 
                         await writer.WriteCharacterAsync('"');
                         await options.NamingStrategy.WriteNameAsync(property.Name, writer);
                         await writer.WriteCharacterAsync('"');
-                        
+
                         await writer.WriteCharacterAsync(':');
                         await WriteAsync(value, writer);
                     }
 
                     await writer.WriteCharacterAsync('}');
                 }
-                break;
+
+            break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
