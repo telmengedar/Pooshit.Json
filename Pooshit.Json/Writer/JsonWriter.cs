@@ -195,8 +195,11 @@ public class JsonWriter : IJsonWriter {
                         if (options.FormatOutput)
                             writer.WriteString(new('\t', indentation));
 
+                        DataMemberAttribute dataMember = property.Attributes.FirstOrDefault(a => a is DataMemberAttribute) as DataMemberAttribute;
                         writer.WriteCharacter('"');
-                        options.NamingStrategy.WriteName(property.Name, writer);
+                        if (dataMember != null)
+                            writer.WriteString(dataMember.Name);
+                        else options.NamingStrategy.WriteName(property.Name, writer);
                         writer.WriteCharacter('"');
 
                         writer.WriteCharacter(':');
