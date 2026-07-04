@@ -2,21 +2,24 @@
 
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageVersion>0.3.40-preview</PackageVersion>
+        <Version>0.3.40-preview</Version>
         <Title>Pooshit.Json</Title>
         <Authors>Toni Gottschall</Authors>
         <Description>Minimalistic Json library</Description>
         <PackageProjectUrl>https://github.com/telmengedar/Pooshit.Json</PackageProjectUrl>
         <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/telmengedar/Pooshit.Json.git</RepositoryUrl>
-        <AssemblyVersion>0.3.40</AssemblyVersion>
         <TargetFrameworks>netstandard2.0; netstandard2.1</TargetFrameworks>
         <PackageId>Pooshit.Json</PackageId>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <Company />
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="Pooshit.Reflection" Version="0.1.11-preview" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="..\README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>
