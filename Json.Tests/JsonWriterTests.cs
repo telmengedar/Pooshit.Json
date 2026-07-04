@@ -390,14 +390,14 @@ public class JsonWriterTests {
     }
 
     [Test, Parallelizable]
-    public async Task WriteDictionaryUsesOptions() {
+    public void WriteDictionaryUsesOptions() {
         Dictionary<string, object> dic = new() {
             ["Null"] = null,
             ["CamelCase"] = "hello"
         };
 
         string result = Pooshit.Json.Json.WriteString(dic, JsonOptions.RestApi);
-        Assert.That(result, Is.EqualTo("{\"camelCase\":\"hello\"}"));
+        Assert.That(result, Is.EqualTo("{\"null\":null,\"camelCase\":\"hello\"}"), "Explicit null dict entry must survive under RestApi; 'Null' becomes 'null' via CamelCase strategy");
     }
 
     [Test, Parallelizable]
@@ -419,7 +419,7 @@ public class JsonWriterTests {
         };
 
         string result = await Pooshit.Json.Json.WriteStringAsync(dic, JsonOptions.RestApi);
-        Assert.That(result, Is.EqualTo("{\"camelCase\":\"hello\"}")); 
+        Assert.That(result, Is.EqualTo("{\"null\":null,\"camelCase\":\"hello\"}"), "Explicit null dict entry must survive under RestApi; 'Null' becomes 'null' via CamelCase strategy");
     }
     
     [Test, Parallelizable]
@@ -428,8 +428,83 @@ public class JsonWriterTests {
         Dictionary<string, object> dic = new() {
             ["camelCase"] = "hello"
         };
-        
+
         string result = await Pooshit.Json.Json.WriteStringAsync(dic, JsonOptions.RestApi);
         Assert.That(result, Is.EqualTo("{\"camelCase\":\"hello\"}"));
+    }
+
+    [Test, Parallelizable]
+    public void DictExplicitNullPreservedDefault() {
+        Dictionary<string, object> dict = new() { ["a"] = "v", ["b"] = null };
+        string result = Pooshit.Json.Json.WriteString(dict, JsonOptions.Default);
+        Assert.That(result, Is.EqualTo("{\"a\":\"v\",\"b\":null}"));
+    }
+
+    [Test, Parallelizable]
+    public void DictExplicitNullPreservedCamel() {
+        Dictionary<string, object> dict = new() { ["a"] = "v", ["b"] = null };
+        string result = Pooshit.Json.Json.WriteString(dict, JsonOptions.Camel);
+        Assert.That(result, Is.EqualTo("{\"a\":\"v\",\"b\":null}"));
+    }
+
+    [Test, Parallelizable]
+    public void DictExplicitNullPreservedRestApi() {
+        Dictionary<string, object> dict = new() { ["a"] = "v", ["b"] = null };
+        string result = Pooshit.Json.Json.WriteString(dict, JsonOptions.RestApi);
+        Assert.That(result, Is.EqualTo("{\"a\":\"v\",\"b\":null}"));
+    }
+
+    [Test, Parallelizable]
+    public async Task DictExplicitNullPreservedDefaultAsync() {
+        Dictionary<string, object> dict = new() { ["a"] = "v", ["b"] = null };
+        string result = await Pooshit.Json.Json.WriteStringAsync(dict, JsonOptions.Default);
+        Assert.That(result, Is.EqualTo("{\"a\":\"v\",\"b\":null}"));
+    }
+
+    [Test, Parallelizable]
+    public async Task DictExplicitNullPreservedCamelAsync() {
+        Dictionary<string, object> dict = new() { ["a"] = "v", ["b"] = null };
+        string result = await Pooshit.Json.Json.WriteStringAsync(dict, JsonOptions.Camel);
+        Assert.That(result, Is.EqualTo("{\"a\":\"v\",\"b\":null}"));
+    }
+
+    [Test, Parallelizable]
+    public async Task DictExplicitNullPreservedRestApiAsync() {
+        Dictionary<string, object> dict = new() { ["a"] = "v", ["b"] = null };
+        string result = await Pooshit.Json.Json.WriteStringAsync(dict, JsonOptions.RestApi);
+        Assert.That(result, Is.EqualTo("{\"a\":\"v\",\"b\":null}"));
+    }
+
+    [Test, Parallelizable]
+    public void NestedDictExplicitNullPreserved() {
+        Dictionary<string, object> dict = new() {
+            ["outer"] = new Dictionary<string, object> { ["inner"] = null, ["val"] = "x" }
+        };
+        string result = Pooshit.Json.Json.WriteString(dict, JsonOptions.Default);
+        Assert.That(result, Is.EqualTo("{\"outer\":{\"inner\":null,\"val\":\"x\"}}"));
+    }
+
+    [Test, Parallelizable]
+    public void DictNullRoundTripSync() {
+        string json = "{\"a\":\"v\",\"b\":null}";
+        Dictionary<string, object> dict = Pooshit.Json.Json.Read<Dictionary<string, object>>(json);
+        string result = Pooshit.Json.Json.WriteString(dict, JsonOptions.Default);
+        Assert.That(result, Is.EqualTo("{\"a\":\"v\",\"b\":null}"));
+    }
+
+    [Test, Parallelizable]
+    public async Task DictNullRoundTripAsync() {
+        string json = "{\"a\":\"v\",\"b\":null}";
+        Dictionary<string, object> dict = await Pooshit.Json.Json.ReadAsync<Dictionary<string, object>>(json);
+        string result = await Pooshit.Json.Json.WriteStringAsync(dict, JsonOptions.Default);
+        Assert.That(result, Is.EqualTo("{\"a\":\"v\",\"b\":null}"));
+    }
+
+    [Test, Parallelizable]
+    public void ObjectNullPropertyExcludedUnderDefault() {
+        string result = Pooshit.Json.Json.WriteString(new TestData { Long = 1 }, JsonOptions.Default);
+        Assert.That(result, Does.Not.Contain("\"String\""));
+        Assert.That(result, Does.Not.Contain("\"ChildTestData\""));
+        Assert.That(result, Does.Contain("\"Long\":1"));
     }
 }
