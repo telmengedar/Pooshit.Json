@@ -142,7 +142,9 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
     /// <inheritdoc />
     public void WriteValue(object data) {
         if (data == null) {
+            WriteState();
             writer.Write("null");
+            state = 1;
             return;
         }
 
@@ -311,7 +313,9 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
     /// <inheritdoc />
     public async Task WriteValueAsync(object data) {
         if (data == null) {
+            await WriteStateAsync();
             await writer.WriteAsync("null");
+            state = 1;
             return;
         }
 

@@ -57,9 +57,6 @@ public class JsonWriter : IJsonWriter {
             }
 
             foreach (DictionaryEntry entry in dictionary) {
-                if (entry.Value == null && options.ExcludeNullProperties)
-                    continue;
-
                 if (first) first = false;
                 else {
                     writer.WriteCharacter(',');
@@ -233,9 +230,6 @@ public class JsonWriter : IJsonWriter {
             await writer.WriteCharacterAsync('{');
             bool first = true;
             foreach (DictionaryEntry entry in dictionary) {
-                if (entry.Value == null && options.ExcludeNullProperties)
-                    continue;
-
                 if (first) first = false;
                 else await writer.WriteCharacterAsync(',');
                     

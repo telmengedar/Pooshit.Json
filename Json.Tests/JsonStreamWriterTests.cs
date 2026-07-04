@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -93,6 +94,38 @@ namespace Json.Tests {
             string data = Encoding.UTF8.GetString(buffer.ToArray());
             Console.WriteLine(data);
             object result = Pooshit.Json.Json.Read(data);
+        }
+
+        [Test, Parallelizable]
+        public void WriteValueDictNullPreservedSync() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new Dictionary<string, object> { ["a"] = "v", ["b"] = null });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"a\":\"v\",\"b\":null}"));
+        }
+
+        [Test, Parallelizable]
+        public async Task WriteValueDictNullPreservedAsync() {
+            MemoryStream buffer = new();
+            await using (JsonStreamWriter writer = new(buffer)) {
+                await writer.WriteValueAsync(new Dictionary<string, object> { ["a"] = "v", ["b"] = null });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"a\":\"v\",\"b\":null}"));
+        }
+
+        [Test, Parallelizable]
+        public void WriteValueNestedDictNullPreservedSync() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new Dictionary<string, object> {
+                    ["outer"] = new Dictionary<string, object> { ["inner"] = null }
+                });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"outer\":{\"inner\":null}}"));
         }
     }
 }
