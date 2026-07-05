@@ -18,7 +18,7 @@ namespace Pooshit.Json.Writer;
 
 /// <inheritdoc />
 public class JsonWriter : IJsonWriter {
-    readonly HashSet<Type> stringtypes = [typeof(Guid), typeof(IPAddress)];
+    readonly HashSet<Type> stringtypes = [typeof(Guid)];
 
     readonly JsonOptions options;
     int indentation;

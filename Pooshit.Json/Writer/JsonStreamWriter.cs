@@ -16,10 +16,7 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
                               , IAsyncDisposable
 #endif
 {
-    readonly HashSet<Type> stringtypes = [
-                                             typeof(Guid),
-                                             typeof(IPAddress)
-                                         ];
+    readonly HashSet<Type> stringtypes = [typeof(Guid)];
 
     readonly StreamWriter writer;
     readonly JsonOptions options=JsonOptions.Default;
@@ -175,7 +172,16 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
 
         if (data is TimeSpan span)
             data = span.ToString("c", CultureInfo.InvariantCulture);
-            
+
+        if (data is IPAddress ipAddress) {
+            WriteState();
+            writer.Write('"');
+            writer.Write(ipAddress.ToString());
+            writer.Write('"');
+            state = 1;
+            return;
+        }
+
         WriteState();
         switch (Type.GetTypeCode(data.GetType())) {
             case TypeCode.Boolean:
@@ -349,7 +355,16 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
 
         if (data is TimeSpan span)
             data = span.ToString("c", CultureInfo.InvariantCulture);
-            
+
+        if (data is IPAddress ipAddress) {
+            await WriteStateAsync();
+            await writer.WriteAsync('"');
+            await writer.WriteAsync(ipAddress.ToString());
+            await writer.WriteAsync('"');
+            state = 1;
+            return;
+        }
+
         await WriteStateAsync();
         switch (Type.GetTypeCode(data.GetType())) {
             case TypeCode.Boolean:

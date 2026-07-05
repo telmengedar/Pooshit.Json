@@ -509,10 +509,6 @@ public class JsonWriterTests {
         Assert.That(result, Does.Contain("\"Long\":1"));
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Async parity — NaN / Infinity (#3343-A1)
-    // ──────────────────────────────────────────────────────────────────────────
-
     [Test, Parallelizable]
     public async Task WriteDoubleNaNAsNullAsync() {
         string result = await Pooshit.Json.Json.WriteStringAsync(double.NaN);
@@ -553,10 +549,6 @@ public class JsonWriterTests {
         Assert.That(async_, Is.EqualTo(sync));
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Async parity — ByteArrayBehavior (#3343-A2)
-    // ──────────────────────────────────────────────────────────────────────────
-
     [Test, Parallelizable]
     public async Task StripBinaryAsync() {
         string result = await Pooshit.Json.Json.WriteStringAsync(new byte[] { 1, 2, 3 }, new() {
@@ -595,10 +587,6 @@ public class JsonWriterTests {
         Assert.That(async_, Is.EqualTo(sync));
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Async parity — DataMemberAttribute (#3343-A3)
-    // ──────────────────────────────────────────────────────────────────────────
-
     [Test, Parallelizable]
     public void DataMemberNameOverrideSync() {
         string result = Pooshit.Json.Json.WriteString(new DataWithDataMember { Value = 7, Label = "hi" });
@@ -624,10 +612,6 @@ public class JsonWriterTests {
         Assert.That(async_, Is.EqualTo(sync));
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Async parity — FormatOutput (#3343-A4)
-    // ──────────────────────────────────────────────────────────────────────────
-
     [Test, Parallelizable]
     public async Task FormatOutputObjectAsync() {
         JsonOptions opts = new() { FormatOutput = true, ExcludeNullProperties = false };
@@ -647,16 +631,11 @@ public class JsonWriterTests {
         Assert.That(result, Does.Contain("\n"));
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Key escaping — JsonWriter (#3347)
-    // ──────────────────────────────────────────────────────────────────────────
-
     [Test, Parallelizable]
     public void DictKeyWithQuoteEscapedSync() {
         string result = Pooshit.Json.Json.WriteString(new Dictionary<string, object> {
             ["ke\"y"] = "val"
         });
-        // the key in the output must not contain a bare unescaped quote
         Assert.That(result, Is.EqualTo("{\"ke\\\"y\":\"val\"}"));
     }
 
@@ -700,17 +679,12 @@ public class JsonWriterTests {
         Assert.That(result, Is.EqualTo("{\"ke\\ny\":\"val\"}"));
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Polish — sync dict indentation (#3351-C5)
-    // ──────────────────────────────────────────────────────────────────────────
-
     [Test, Parallelizable]
     public void FormatOutputNestedDictNoIndentLeak() {
         JsonOptions opts = new() { FormatOutput = true };
         string result = Pooshit.Json.Json.WriteString(new Dictionary<string, object> {
             ["outer"] = new Dictionary<string, object> { ["inner"] = 1 }
         }, opts);
-        // The closing brace of the outer dict must be at indentation level 0 (no leading tabs)
         string[] lines = result.Split('\n');
         string lastLine = lines[^1];
         Assert.That(lastLine, Is.EqualTo("}"), $"closing brace should be at level 0, got: '{lastLine}'");
@@ -726,10 +700,6 @@ public class JsonWriterTests {
         string lastLine = lines[^1];
         Assert.That(lastLine, Is.EqualTo("}"), $"closing brace should be at level 0, got: '{lastLine}'");
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Polish — IPAddress in stringtypes (#3351-C6)
-    // ──────────────────────────────────────────────────────────────────────────
 
     [Test, Parallelizable]
     public void IPAddressWritesAsQuotedString() {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Json.Tests.Data;
@@ -128,10 +129,6 @@ namespace Json.Tests {
             Assert.That(data, Is.EqualTo("{\"outer\":{\"inner\":null}}"));
         }
 
-        // ──────────────────────────────────────────────────────────────────────
-        // Key escaping — JsonStreamWriter (#3347)
-        // ──────────────────────────────────────────────────────────────────────
-
         [Test, Parallelizable]
         public void WriteKeyWithQuoteEscapedSync() {
             MemoryStream buffer = new();
@@ -222,6 +219,26 @@ namespace Json.Tests {
             }
             string data = Encoding.UTF8.GetString(buffer.ToArray());
             Assert.That(data, Is.EqualTo("{\"ke\\\"y\":\"val\"}"));
+        }
+
+        [Test, Parallelizable]
+        public void StreamWriterIPAddressLoopbackSync() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(IPAddress.Loopback);
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("\"127.0.0.1\""));
+        }
+
+        [Test, Parallelizable]
+        public async Task StreamWriterIPAddressLoopbackAsync() {
+            MemoryStream buffer = new();
+            await using (JsonStreamWriter writer = new(buffer)) {
+                await writer.WriteValueAsync(IPAddress.Loopback);
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("\"127.0.0.1\""));
         }
     }
 }
