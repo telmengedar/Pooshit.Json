@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Json.Tests.Data;
 using NUnit.Framework;
@@ -506,5 +507,209 @@ public class JsonWriterTests {
         Assert.That(result, Does.Not.Contain("\"String\""));
         Assert.That(result, Does.Not.Contain("\"ChildTestData\""));
         Assert.That(result, Does.Contain("\"Long\":1"));
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteDoubleNaNAsNullAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(double.NaN);
+        Assert.That(result, Is.EqualTo("null"));
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteDoublePositiveInfinityAsNullAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(double.PositiveInfinity);
+        Assert.That(result, Is.EqualTo("null"));
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteDoubleNegativeInfinityAsNullAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(double.NegativeInfinity);
+        Assert.That(result, Is.EqualTo("null"));
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteFloatNaNAsNullAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(float.NaN);
+        Assert.That(result, Is.EqualTo("null"));
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteFloatPositiveInfinityAsNullAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(float.PositiveInfinity);
+        Assert.That(result, Is.EqualTo("null"));
+    }
+
+    /// <summary>
+    /// sync and async must agree for NaN
+    /// </summary>
+    [Test, Parallelizable]
+    public async Task NaNSyncAsyncParity() {
+        string sync = Pooshit.Json.Json.WriteString(double.NaN);
+        string async_ = await Pooshit.Json.Json.WriteStringAsync(double.NaN);
+        Assert.That(async_, Is.EqualTo(sync));
+    }
+
+    [Test, Parallelizable]
+    public async Task StripBinaryAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new byte[] { 1, 2, 3 }, new() {
+            ByteArrayBehavior = ByteArrayBehavior.Strip
+        });
+        Assert.That(result, Is.EqualTo("null"));
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteBinaryAsBase64Async() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new byte[] { 1, 2, 3 }, new() {
+            ByteArrayBehavior = ByteArrayBehavior.Base64
+        });
+        Assert.That(result, Is.EqualTo("\"AQID\""));
+    }
+
+    [Test, Parallelizable]
+    public async Task StripBinaryInDictionaryAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new Dictionary<string, object> {
+            ["prop"] = new byte[] { 1, 2, 3 }
+        }, new() {
+            ByteArrayBehavior = ByteArrayBehavior.Strip
+        });
+        Assert.That(result, Is.EqualTo("{\"prop\":null}"));
+    }
+
+    /// <summary>
+    /// sync and async must agree for Base64
+    /// </summary>
+    [Test, Parallelizable]
+    public async Task ByteArrayBase64SyncAsyncParity() {
+        byte[] data = [1, 2, 3];
+        JsonOptions opts = new() { ByteArrayBehavior = ByteArrayBehavior.Base64 };
+        string sync = Pooshit.Json.Json.WriteString(data, opts);
+        string async_ = await Pooshit.Json.Json.WriteStringAsync(data, opts);
+        Assert.That(async_, Is.EqualTo(sync));
+    }
+
+    [Test, Parallelizable]
+    public void DataMemberNameOverrideSync() {
+        string result = Pooshit.Json.Json.WriteString(new DataWithDataMember { Value = 7, Label = "hi" });
+        Assert.That(result, Does.Contain("\"x\":7"));
+        Assert.That(result, Does.Not.Contain("\"Value\""));
+    }
+
+    [Test, Parallelizable]
+    public async Task DataMemberNameOverrideAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new DataWithDataMember { Value = 7, Label = "hi" });
+        Assert.That(result, Does.Contain("\"x\":7"));
+        Assert.That(result, Does.Not.Contain("\"Value\""));
+    }
+
+    /// <summary>
+    /// sync and async must agree for DataMember name override
+    /// </summary>
+    [Test, Parallelizable]
+    public async Task DataMemberSyncAsyncParity() {
+        DataWithDataMember obj = new() { Value = 42, Label = "parity" };
+        string sync = Pooshit.Json.Json.WriteString(obj);
+        string async_ = await Pooshit.Json.Json.WriteStringAsync(obj);
+        Assert.That(async_, Is.EqualTo(sync));
+    }
+
+    [Test, Parallelizable]
+    public async Task FormatOutputObjectAsync() {
+        JsonOptions opts = new() { FormatOutput = true, ExcludeNullProperties = false };
+        string result = await Pooshit.Json.Json.WriteStringAsync(new DataWithDataMember { Value = 1, Label = "l" }, opts);
+        Assert.That(result, Does.Contain("\t"));
+        Assert.That(result, Does.Contain("\n"));
+    }
+
+    [Test, Parallelizable]
+    public async Task FormatOutputDictAsync() {
+        JsonOptions opts = new() { FormatOutput = true };
+        string result = await Pooshit.Json.Json.WriteStringAsync(new Dictionary<string, object> {
+            ["a"] = 1,
+            ["b"] = 2
+        }, opts);
+        Assert.That(result, Does.Contain("\t"));
+        Assert.That(result, Does.Contain("\n"));
+    }
+
+    [Test, Parallelizable]
+    public void DictKeyWithQuoteEscapedSync() {
+        string result = Pooshit.Json.Json.WriteString(new Dictionary<string, object> {
+            ["ke\"y"] = "val"
+        });
+        Assert.That(result, Is.EqualTo("{\"ke\\\"y\":\"val\"}"));
+    }
+
+    [Test, Parallelizable]
+    public async Task DictKeyWithQuoteEscapedAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new Dictionary<string, object> {
+            ["ke\"y"] = "val"
+        });
+        Assert.That(result, Is.EqualTo("{\"ke\\\"y\":\"val\"}"));
+    }
+
+    [Test, Parallelizable]
+    public void DictKeyWithBackslashEscapedSync() {
+        string result = Pooshit.Json.Json.WriteString(new Dictionary<string, object> {
+            ["ke\\y"] = "val"
+        });
+        Assert.That(result, Is.EqualTo("{\"ke\\\\y\":\"val\"}"));
+    }
+
+    [Test, Parallelizable]
+    public async Task DictKeyWithBackslashEscapedAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new Dictionary<string, object> {
+            ["ke\\y"] = "val"
+        });
+        Assert.That(result, Is.EqualTo("{\"ke\\\\y\":\"val\"}"));
+    }
+
+    [Test, Parallelizable]
+    public void DictKeyWithNewlineEscapedSync() {
+        string result = Pooshit.Json.Json.WriteString(new Dictionary<string, object> {
+            ["ke\ny"] = "val"
+        });
+        Assert.That(result, Is.EqualTo("{\"ke\\ny\":\"val\"}"));
+    }
+
+    [Test, Parallelizable]
+    public async Task DictKeyWithNewlineEscapedAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new Dictionary<string, object> {
+            ["ke\ny"] = "val"
+        });
+        Assert.That(result, Is.EqualTo("{\"ke\\ny\":\"val\"}"));
+    }
+
+    [Test, Parallelizable]
+    public void FormatOutputNestedDictNoIndentLeak() {
+        JsonOptions opts = new() { FormatOutput = true };
+        string result = Pooshit.Json.Json.WriteString(new Dictionary<string, object> {
+            ["outer"] = new Dictionary<string, object> { ["inner"] = 1 }
+        }, opts);
+        string[] lines = result.Split('\n');
+        string lastLine = lines[^1];
+        Assert.That(lastLine, Is.EqualTo("}"), $"closing brace should be at level 0, got: '{lastLine}'");
+    }
+
+    [Test, Parallelizable]
+    public async Task FormatOutputNestedDictNoIndentLeakAsync() {
+        JsonOptions opts = new() { FormatOutput = true };
+        string result = await Pooshit.Json.Json.WriteStringAsync(new Dictionary<string, object> {
+            ["outer"] = new Dictionary<string, object> { ["inner"] = 1 }
+        }, opts);
+        string[] lines = result.Split('\n');
+        string lastLine = lines[^1];
+        Assert.That(lastLine, Is.EqualTo("}"), $"closing brace should be at level 0, got: '{lastLine}'");
+    }
+
+    [Test, Parallelizable]
+    public void IPAddressWritesAsQuotedString() {
+        string result = Pooshit.Json.Json.WriteString(IPAddress.Loopback);
+        Assert.That(result, Is.EqualTo("\"127.0.0.1\""));
+    }
+
+    [Test, Parallelizable]
+    public async Task IPAddressWritesAsQuotedStringAsync() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(IPAddress.Loopback);
+        Assert.That(result, Is.EqualTo("\"127.0.0.1\""));
     }
 }

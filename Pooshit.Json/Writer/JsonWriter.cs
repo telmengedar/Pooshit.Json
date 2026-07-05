@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading;
@@ -21,7 +22,7 @@ public class JsonWriter : IJsonWriter {
 
     readonly JsonOptions options;
     int indentation;
-        
+
     /// <summary>
     /// creates a new <see cref="JsonWriter"/>
     /// </summary>
@@ -49,37 +50,44 @@ public class JsonWriter : IJsonWriter {
         if (data is IDictionary dictionary) {
             writer.WriteCharacter('{');
             bool first = true;
-                
+
             if (options.FormatOutput) {
                 ++indentation;
                 writer.WriteCharacter('\n');
-                        
             }
 
             foreach (DictionaryEntry entry in dictionary) {
                 if (first) first = false;
                 else {
                     writer.WriteCharacter(',');
-                    if(options.FormatOutput)
+                    if (options.FormatOutput)
                         writer.WriteCharacter('\n');
                 }
 
-                if(options.FormatOutput)
+                if (options.FormatOutput)
                     writer.WriteString(new('\t', indentation));
 
                 writer.WriteCharacter('"');
-                options.NamingStrategy.WriteName(entry.Key.ToString(), writer);
+                foreach (char c in options.NamingStrategy.GenerateName(entry.Key.ToString()))
+                    WriteEscapeValue(c, writer);
                 writer.WriteCharacter('"');
-                
+
                 writer.WriteCharacter(':');
                 Write(entry.Value, writer);
             }
+
+            if (options.FormatOutput) {
+                writer.WriteCharacter('\n');
+                --indentation;
+                writer.WriteString(new('\t', indentation));
+            }
+
             writer.WriteCharacter('}');
             return;
         }
 
         if (!(data is string) && data is IEnumerable array) {
-            if (data is byte[] binary && options.ByteArrayBehavior!=ByteArrayBehavior.Keep) {
+            if (data is byte[] binary && options.ByteArrayBehavior != ByteArrayBehavior.Keep) {
                 switch (options.ByteArrayBehavior) {
                     case ByteArrayBehavior.Strip:
                         Write(null, writer);
@@ -90,7 +98,7 @@ public class JsonWriter : IJsonWriter {
                 }
                 return;
             }
-            
+
             writer.WriteCharacter('[');
             bool first = true;
             foreach (object item in array) {
@@ -101,7 +109,7 @@ public class JsonWriter : IJsonWriter {
             writer.WriteCharacter(']');
             return;
         }
-            
+
         if (data.GetType().IsEnum) {
             if (options.WriteEnumsAsStrings)
                 data = data.ToString();
@@ -110,6 +118,13 @@ public class JsonWriter : IJsonWriter {
 
         if (data is TimeSpan span)
             data = span.ToString("c", CultureInfo.InvariantCulture);
+
+        if (data is IPAddress ipAddress) {
+            writer.WriteCharacter('"');
+            writer.WriteString(ipAddress.ToString());
+            writer.WriteCharacter('"');
+            return;
+        }
 
         switch (Type.GetTypeCode(data.GetType())) {
             case TypeCode.Boolean:
@@ -170,7 +185,6 @@ public class JsonWriter : IJsonWriter {
                     if (options.FormatOutput) {
                         ++indentation;
                         writer.WriteCharacter('\n');
-
                     }
 
                     IModel model = Model.GetModel(data.GetType());
@@ -193,10 +207,10 @@ public class JsonWriter : IJsonWriter {
                             writer.WriteString(new('\t', indentation));
 
                         DataMemberAttribute dataMember = property.Attributes.FirstOrDefault(a => a is DataMemberAttribute) as DataMemberAttribute;
+                        string keyName = dataMember?.Name ?? options.NamingStrategy.GenerateName(property.Name);
                         writer.WriteCharacter('"');
-                        if (dataMember != null)
-                            writer.WriteString(dataMember.Name);
-                        else options.NamingStrategy.WriteName(property.Name, writer);
+                        foreach (char c in keyName)
+                            WriteEscapeValue(c, writer);
                         writer.WriteCharacter('"');
 
                         writer.WriteCharacter(':');
@@ -218,7 +232,7 @@ public class JsonWriter : IJsonWriter {
         }
     }
 
-        
+
     /// <inheritdoc />
     public async Task WriteAsync(object data, IDataWriter writer) {
         if (data == null) {
@@ -229,17 +243,38 @@ public class JsonWriter : IJsonWriter {
         if (data is IDictionary dictionary) {
             await writer.WriteCharacterAsync('{');
             bool first = true;
+
+            if (options.FormatOutput) {
+                ++indentation;
+                await writer.WriteCharacterAsync('\n');
+            }
+
             foreach (DictionaryEntry entry in dictionary) {
                 if (first) first = false;
-                else await writer.WriteCharacterAsync(',');
-                    
+                else {
+                    await writer.WriteCharacterAsync(',');
+                    if (options.FormatOutput)
+                        await writer.WriteCharacterAsync('\n');
+                }
+
+                if (options.FormatOutput)
+                    await writer.WriteStringAsync(new('\t', indentation));
+
                 await writer.WriteCharacterAsync('"');
-                await options.NamingStrategy.WriteNameAsync(entry.Key.ToString(), writer);
+                foreach (char c in options.NamingStrategy.GenerateName(entry.Key.ToString()))
+                    await WriteEscapeValueAsync(c, writer);
                 await writer.WriteCharacterAsync('"');
 
                 await writer.WriteCharacterAsync(':');
                 await WriteAsync(entry.Value, writer);
             }
+
+            if (options.FormatOutput) {
+                await writer.WriteCharacterAsync('\n');
+                --indentation;
+                await writer.WriteStringAsync(new('\t', indentation));
+            }
+
             await writer.WriteCharacterAsync('}');
             return;
         }
@@ -265,6 +300,18 @@ public class JsonWriter : IJsonWriter {
 #endif
 
         if (data is not string && data is IEnumerable array) {
+            if (data is byte[] binary && options.ByteArrayBehavior != ByteArrayBehavior.Keep) {
+                switch (options.ByteArrayBehavior) {
+                    case ByteArrayBehavior.Strip:
+                        await WriteAsync(null, writer);
+                    break;
+                    case ByteArrayBehavior.Base64:
+                        await WriteAsync(Convert.ToBase64String(binary), writer);
+                    break;
+                }
+                return;
+            }
+
             await writer.WriteCharacterAsync('[');
             bool first = true;
             foreach (object item in array) {
@@ -275,7 +322,7 @@ public class JsonWriter : IJsonWriter {
             await writer.WriteCharacterAsync(']');
             return;
         }
-        
+
         if (data.GetType().IsEnum) {
             if (options.WriteEnumsAsStrings)
                 data = data.ToString();
@@ -284,6 +331,13 @@ public class JsonWriter : IJsonWriter {
 
         if (data is TimeSpan span)
             data = span.ToString("c", CultureInfo.InvariantCulture);
+
+        if (data is IPAddress asyncIpAddress) {
+            await writer.WriteCharacterAsync('"');
+            await writer.WriteStringAsync(asyncIpAddress.ToString());
+            await writer.WriteCharacterAsync('"');
+            return;
+        }
 
         switch (Type.GetTypeCode(data.GetType())) {
             case TypeCode.Boolean:
@@ -299,9 +353,17 @@ public class JsonWriter : IJsonWriter {
             case TypeCode.UInt32:
             case TypeCode.UInt64:
             case TypeCode.Decimal:
-            case TypeCode.Single:
-            case TypeCode.Double:
                 await writer.WriteStringAsync(Convert.ToString(data, CultureInfo.InvariantCulture));
+            break;
+            case TypeCode.Single:
+                if (float.IsNaN((float)data) || float.IsInfinity((float)data))
+                    await writer.WriteStringAsync("null");
+                else await writer.WriteStringAsync(Convert.ToString(data, CultureInfo.InvariantCulture));
+            break;
+            case TypeCode.Double:
+                if (double.IsNaN((double)data) || double.IsInfinity((double)data))
+                    await writer.WriteStringAsync("null");
+                else await writer.WriteStringAsync(Convert.ToString(data, CultureInfo.InvariantCulture));
             break;
             case TypeCode.Empty:
             case TypeCode.DBNull:
@@ -334,6 +396,11 @@ public class JsonWriter : IJsonWriter {
                     bool first = true;
                     await writer.WriteCharacterAsync('{');
 
+                    if (options.FormatOutput) {
+                        ++indentation;
+                        await writer.WriteCharacterAsync('\n');
+                    }
+
                     IModel model = Model.GetModel(data.GetType());
                     foreach (IPropertyInfo property in model.Properties) {
                         if (!property.HasSetter || !property.HasGetter || property.Attributes.Any(a => a is IgnoreDataMemberAttribute))
@@ -344,14 +411,30 @@ public class JsonWriter : IJsonWriter {
                             continue;
 
                         if (first) first = false;
-                        else await writer.WriteCharacterAsync(',');
+                        else {
+                            await writer.WriteCharacterAsync(',');
+                            if (options.FormatOutput)
+                                await writer.WriteCharacterAsync('\n');
+                        }
 
+                        if (options.FormatOutput)
+                            await writer.WriteStringAsync(new('\t', indentation));
+
+                        DataMemberAttribute dataMember = property.Attributes.FirstOrDefault(a => a is DataMemberAttribute) as DataMemberAttribute;
+                        string keyName = dataMember?.Name ?? options.NamingStrategy.GenerateName(property.Name);
                         await writer.WriteCharacterAsync('"');
-                        await options.NamingStrategy.WriteNameAsync(property.Name, writer);
+                        foreach (char c in keyName)
+                            await WriteEscapeValueAsync(c, writer);
                         await writer.WriteCharacterAsync('"');
 
                         await writer.WriteCharacterAsync(':');
                         await WriteAsync(value, writer);
+                    }
+
+                    if (options.FormatOutput) {
+                        await writer.WriteCharacterAsync('\n');
+                        --indentation;
+                        await writer.WriteStringAsync(new('\t', indentation));
                     }
 
                     await writer.WriteCharacterAsync('}');
@@ -390,7 +473,7 @@ public class JsonWriter : IJsonWriter {
                 break;
         }
     }
-        
+
     Task WriteEscapeValueAsync(char character, IDataWriter writer) {
         switch (character) {
             case '\\':

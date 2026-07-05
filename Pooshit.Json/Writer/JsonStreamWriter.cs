@@ -16,10 +16,7 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
                               , IAsyncDisposable
 #endif
 {
-    readonly HashSet<Type> stringtypes = [
-                                             typeof(Guid),
-                                             typeof(IPAddress)
-                                         ];
+    readonly HashSet<Type> stringtypes = [typeof(Guid)];
 
     readonly StreamWriter writer;
     readonly JsonOptions options=JsonOptions.Default;
@@ -101,7 +98,10 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
         if (state > 1)
             throw new InvalidOperationException("A key cannot follow a key in a json stream");
         WriteState();
-        writer.Write($"\"{key}\"");
+        writer.Write('"');
+        foreach (char c in key)
+            WriteEscapeValue(c);
+        writer.Write('"');
         state = 2;
     }
 
@@ -172,7 +172,16 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
 
         if (data is TimeSpan span)
             data = span.ToString("c", CultureInfo.InvariantCulture);
-            
+
+        if (data is IPAddress ipAddress) {
+            WriteState();
+            writer.Write('"');
+            writer.Write(ipAddress.ToString());
+            writer.Write('"');
+            state = 1;
+            return;
+        }
+
         WriteState();
         switch (Type.GetTypeCode(data.GetType())) {
             case TypeCode.Boolean:
@@ -280,7 +289,10 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
         if (state > 1)
             throw new InvalidOperationException("A key cannot follow a key in a json stream");
         await WriteStateAsync();
-        await writer.WriteAsync($"\"{key}\"");
+        await writer.WriteAsync('"');
+        foreach (char c in key)
+            await WriteEscapeValueAsync(c);
+        await writer.WriteAsync('"');
         state = 2;
     }
 
@@ -343,7 +355,16 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
 
         if (data is TimeSpan span)
             data = span.ToString("c", CultureInfo.InvariantCulture);
-            
+
+        if (data is IPAddress ipAddress) {
+            await WriteStateAsync();
+            await writer.WriteAsync('"');
+            await writer.WriteAsync(ipAddress.ToString());
+            await writer.WriteAsync('"');
+            state = 1;
+            return;
+        }
+
         await WriteStateAsync();
         switch (Type.GetTypeCode(data.GetType())) {
             case TypeCode.Boolean:

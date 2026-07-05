@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Json.Tests.Data;
@@ -126,6 +127,118 @@ namespace Json.Tests {
             }
             string data = Encoding.UTF8.GetString(buffer.ToArray());
             Assert.That(data, Is.EqualTo("{\"outer\":{\"inner\":null}}"));
+        }
+
+        [Test, Parallelizable]
+        public void WriteKeyWithQuoteEscapedSync() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.BeginObject();
+                writer.WriteProperty("ke\"y", "val");
+                writer.EndObject();
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"ke\\\"y\":\"val\"}"));
+        }
+
+        [Test, Parallelizable]
+        public async Task WriteKeyWithQuoteEscapedAsync() {
+            MemoryStream buffer = new();
+            await using (JsonStreamWriter writer = new(buffer)) {
+                await writer.BeginObjectAsync();
+                await writer.WritePropertyAsync("ke\"y", "val");
+                await writer.EndObjectAsync();
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"ke\\\"y\":\"val\"}"));
+        }
+
+        [Test, Parallelizable]
+        public void WriteKeyWithBackslashEscapedSync() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.BeginObject();
+                writer.WriteProperty("ke\\y", "val");
+                writer.EndObject();
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"ke\\\\y\":\"val\"}"));
+        }
+
+        [Test, Parallelizable]
+        public async Task WriteKeyWithBackslashEscapedAsync() {
+            MemoryStream buffer = new();
+            await using (JsonStreamWriter writer = new(buffer)) {
+                await writer.BeginObjectAsync();
+                await writer.WritePropertyAsync("ke\\y", "val");
+                await writer.EndObjectAsync();
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"ke\\\\y\":\"val\"}"));
+        }
+
+        [Test, Parallelizable]
+        public void WriteKeyWithNewlineEscapedSync() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.BeginObject();
+                writer.WriteProperty("ke\ny", "val");
+                writer.EndObject();
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"ke\\ny\":\"val\"}"));
+        }
+
+        [Test, Parallelizable]
+        public async Task WriteKeyWithNewlineEscapedAsync() {
+            MemoryStream buffer = new();
+            await using (JsonStreamWriter writer = new(buffer)) {
+                await writer.BeginObjectAsync();
+                await writer.WritePropertyAsync("ke\ny", "val");
+                await writer.EndObjectAsync();
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"ke\\ny\":\"val\"}"));
+        }
+
+        [Test, Parallelizable]
+        public void WriteDictValueKeyWithQuoteEscapedSync() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new Dictionary<string, object> { ["ke\"y"] = "val" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"ke\\\"y\":\"val\"}"));
+        }
+
+        [Test, Parallelizable]
+        public async Task WriteDictValueKeyWithQuoteEscapedAsync() {
+            MemoryStream buffer = new();
+            await using (JsonStreamWriter writer = new(buffer)) {
+                await writer.WriteValueAsync(new Dictionary<string, object> { ["ke\"y"] = "val" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("{\"ke\\\"y\":\"val\"}"));
+        }
+
+        [Test, Parallelizable]
+        public void StreamWriterIPAddressLoopbackSync() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(IPAddress.Loopback);
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("\"127.0.0.1\""));
+        }
+
+        [Test, Parallelizable]
+        public async Task StreamWriterIPAddressLoopbackAsync() {
+            MemoryStream buffer = new();
+            await using (JsonStreamWriter writer = new(buffer)) {
+                await writer.WriteValueAsync(IPAddress.Loopback);
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Is.EqualTo("\"127.0.0.1\""));
         }
     }
 }
