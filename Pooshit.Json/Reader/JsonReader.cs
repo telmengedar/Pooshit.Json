@@ -513,6 +513,8 @@ public class JsonReader : IJsonReader {
                                 _ => ToValue(value)
                             };
 
+        if (type == typeof(double) && typedvalue == null)
+            return double.NaN;
         if (type != typeof(object))
             typedvalue = Converter.Convert(typedvalue, type, true);
         return typedvalue;
