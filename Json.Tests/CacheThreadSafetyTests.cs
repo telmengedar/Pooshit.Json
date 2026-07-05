@@ -9,22 +9,13 @@ using Pooshit.Reflection;
 
 namespace Json.Tests;
 
-/// <summary>
-/// Verifies that the three caches switched to ConcurrentDictionary still
-/// produce correct results, including null-caching for unknown names and
-/// DataMember-attribute name resolution.  Also exercises concurrent access
-/// to confirm no corruption under parallel load (bounded, deterministic
-/// output — the race itself is timing-dependent and cannot be forced).
-/// </summary>
 [TestFixture, Parallelizable]
 public class CacheThreadSafetyTests {
-
-    // ── ReflectionModel functional ────────────────────────────────────────
 
     [Test, Parallelizable]
     public void ReflectionModel_ResolvesKnownProperty() {
         ReflectionModel model = new(typeof(TestData));
-        var property = model.GetProperty("long");
+        IPropertyInfo property = model.GetProperty("long");
         Assert.NotNull(property);
         Assert.AreEqual("Long", property.Name);
     }
@@ -32,16 +23,16 @@ public class CacheThreadSafetyTests {
     [Test, Parallelizable]
     public void ReflectionModel_ReturnsCachedInstance() {
         ReflectionModel model = new(typeof(TestData));
-        var first  = model.GetProperty("string");
-        var second = model.GetProperty("string");
+        IPropertyInfo first  = model.GetProperty("string");
+        IPropertyInfo second = model.GetProperty("string");
         Assert.AreSame(first, second);
     }
 
     [Test, Parallelizable]
     public void ReflectionModel_CachesNullForUnknownProperty() {
         ReflectionModel model = new(typeof(TestData));
-        var first  = model.GetProperty("__no_such_property__");
-        var second = model.GetProperty("__no_such_property__");
+        IPropertyInfo first  = model.GetProperty("__no_such_property__");
+        IPropertyInfo second = model.GetProperty("__no_such_property__");
         Assert.IsNull(first);
         Assert.IsNull(second);
     }
@@ -49,17 +40,15 @@ public class CacheThreadSafetyTests {
     [Test, Parallelizable]
     public void ReflectionModel_ResolvesDataMemberName() {
         ReflectionModel model = new(typeof(SnakeData));
-        var property = model.GetProperty("over_the_top");
+        IPropertyInfo property = model.GetProperty("over_the_top");
         Assert.NotNull(property);
         Assert.AreEqual("OverTheTop", property.Name);
     }
 
-    // ── SourceGenModel functional ─────────────────────────────────────────
-
     [Test, Parallelizable]
     public void SourceGenModel_ResolvesKnownProperty() {
         SourceGenModel model = new(Reflection.GetModel(typeof(TestData)));
-        var property = model.GetProperty("long");
+        IPropertyInfo property = model.GetProperty("long");
         Assert.NotNull(property);
         Assert.AreEqual("Long", property.Name);
     }
@@ -67,16 +56,16 @@ public class CacheThreadSafetyTests {
     [Test, Parallelizable]
     public void SourceGenModel_ReturnsCachedInstance() {
         SourceGenModel model = new(Reflection.GetModel(typeof(TestData)));
-        var first  = model.GetProperty("string");
-        var second = model.GetProperty("string");
+        IPropertyInfo first  = model.GetProperty("string");
+        IPropertyInfo second = model.GetProperty("string");
         Assert.AreSame(first, second);
     }
 
     [Test, Parallelizable]
     public void SourceGenModel_CachesNullForUnknownProperty() {
         SourceGenModel model = new(Reflection.GetModel(typeof(TestData)));
-        var first  = model.GetProperty("__no_such_property__");
-        var second = model.GetProperty("__no_such_property__");
+        IPropertyInfo first  = model.GetProperty("__no_such_property__");
+        IPropertyInfo second = model.GetProperty("__no_such_property__");
         Assert.IsNull(first);
         Assert.IsNull(second);
     }
@@ -84,17 +73,14 @@ public class CacheThreadSafetyTests {
     [Test, Parallelizable]
     public void SourceGenModel_ResolvesDataMemberName() {
         SourceGenModel model = new(Reflection.GetModel(typeof(SnakeData)));
-        var property = model.GetProperty("over_the_top");
+        IPropertyInfo property = model.GetProperty("over_the_top");
         Assert.NotNull(property);
         Assert.AreEqual("OverTheTop", property.Name);
     }
 
-    // ── Converter functional ──────────────────────────────────────────────
-
     [Test, Parallelizable]
+    [Description("long→byte is absent from the built-in converter registry, so this pair exercises the ConcurrentDictionary write path cleanly.")]
     public void RegisterConverter_IsUsedOnSubsequentConversion() {
-        // long → byte is absent from the built-in registry, so this pair
-        // exercises the new ConcurrentDictionary write path cleanly.
         bool wasCalled = false;
         Pooshit.Json.Json.SetCustomConverter(typeof(long), typeof(byte), v => {
             wasCalled = true;
@@ -106,12 +92,8 @@ public class CacheThreadSafetyTests {
         Assert.AreEqual((byte)42, result);
     }
 
-    // ── Concurrency stress tests (bounded) ───────────────────────────────
-    // The data race is timing-dependent; these tests verify that concurrent
-    // access produces correct results (no corrupt or missing cache entries).
-    // Each test is bounded: 32 tasks × 50 iterations × 7 property names = 11 200 calls.
-
     [Test, Parallelizable]
+    [Description("Verifies correct results under concurrent access; the race is timing-dependent and cannot be forced. Bounded: 32 tasks × 50 iterations × 7 property names = 11 200 calls.")]
     public void ReflectionModel_ConcurrentGetProperty_AllResultsCorrect() {
         const int parallelism = 32;
         const int iterations  = 50;
@@ -134,6 +116,7 @@ public class CacheThreadSafetyTests {
     }
 
     [Test, Parallelizable]
+    [Description("Verifies correct results under concurrent access; the race is timing-dependent and cannot be forced. Bounded: 32 tasks × 50 iterations × 7 property names = 11 200 calls.")]
     public void SourceGenModel_ConcurrentGetProperty_AllResultsCorrect() {
         const int parallelism = 32;
         const int iterations  = 50;
