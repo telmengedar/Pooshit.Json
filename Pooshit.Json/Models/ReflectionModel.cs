@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -11,8 +12,7 @@ namespace Pooshit.Json.Models;
 /// model using regular reflection
 /// </summary>
 public class ReflectionModel : IModel {
-    readonly Dictionary<string, IPropertyInfo> propertyCache = new();
-    readonly object accessLock = new();
+    readonly ConcurrentDictionary<string, IPropertyInfo> propertyCache = new();
     readonly Type modelType;
 
     /// <summary>
@@ -26,12 +26,9 @@ public class ReflectionModel : IModel {
 
     /// <inheritdoc />
     public IPropertyInfo GetProperty(string jsonName) {
-        if (propertyCache.TryGetValue(jsonName, out IPropertyInfo property))
-            return property;
-
-        PropertyInfo reflectionProperty = modelType.GetProperties().FirstOrDefault(p => p.GetIndexParameters().Length==0 && string.Compare(jsonName, p.Name, StringComparison.InvariantCultureIgnoreCase) == 0 || p.GetCustomAttributes().Any(a => a is DataMemberAttribute dma && dma.Name == jsonName));
-        property = reflectionProperty != null ? new ReflectionProperty(reflectionProperty) : null;
-        lock(accessLock)
-            return propertyCache[jsonName] = property;
+        return propertyCache.GetOrAdd(jsonName, name => {
+            PropertyInfo reflectionProperty = modelType.GetProperties().FirstOrDefault(p => p.GetIndexParameters().Length == 0 && string.Compare(name, p.Name, StringComparison.InvariantCultureIgnoreCase) == 0 || p.GetCustomAttributes().Any(a => a is DataMemberAttribute dma && dma.Name == name));
+            return reflectionProperty != null ? new ReflectionProperty(reflectionProperty) : null;
+        });
     }
 }
