@@ -101,7 +101,10 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
         if (state > 1)
             throw new InvalidOperationException("A key cannot follow a key in a json stream");
         WriteState();
-        writer.Write($"\"{key}\"");
+        writer.Write('"');
+        foreach (char c in key)
+            WriteEscapeValue(c);
+        writer.Write('"');
         state = 2;
     }
 
@@ -280,7 +283,10 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
         if (state > 1)
             throw new InvalidOperationException("A key cannot follow a key in a json stream");
         await WriteStateAsync();
-        await writer.WriteAsync($"\"{key}\"");
+        await writer.WriteAsync('"');
+        foreach (char c in key)
+            await WriteEscapeValueAsync(c);
+        await writer.WriteAsync('"');
         state = 2;
     }
 
