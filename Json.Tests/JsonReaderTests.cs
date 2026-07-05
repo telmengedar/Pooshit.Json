@@ -272,4 +272,30 @@ public class JsonReaderTests {
         object deserialized = Pooshit.Json.Json.Read("-823");
         Assert.That(deserialized is long);
     }
+
+    [Test, Parallelizable]
+    public void ReadNullAsDoubleYieldsNaNSync() {
+        double result = Pooshit.Json.Json.Read<double>("null");
+        Assert.That(double.IsNaN(result));
+    }
+
+    [Test, Parallelizable]
+    public async Task ReadNullAsDoubleYieldsNaNAsync() {
+        double result = await Pooshit.Json.Json.ReadAsync<double>("null");
+        Assert.That(double.IsNaN(result));
+    }
+
+    [Test, Parallelizable]
+    public async Task ReadNullAsDoubleSyncAsyncParity() {
+        double syncResult = Pooshit.Json.Json.Read<double>("null");
+        double asyncResult = await Pooshit.Json.Json.ReadAsync<double>("null");
+        Assert.That(double.IsNaN(syncResult), "sync path should yield NaN for null->double");
+        Assert.That(double.IsNaN(asyncResult), "async path should yield NaN for null->double, matching sync");
+    }
+
+    [Test, Parallelizable]
+    public async Task ReadNullDoubleFieldInObjectAsync() {
+        DoubleData result = await Pooshit.Json.Json.ReadAsync<DoubleData>("{\"value\":null}");
+        Assert.That(double.IsNaN(result.Value));
+    }
 }
