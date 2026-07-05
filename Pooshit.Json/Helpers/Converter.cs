@@ -1,6 +1,7 @@
 ﻿// copied from NightlyCode.Core Library
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -12,7 +13,7 @@ namespace Pooshit.Json.Helpers {
     /// converter used to convert data types
     /// </summary>
     static class Converter {
-        static readonly Dictionary<Tuple<Type,Type>, Func<object, object>> specificconverters = new Dictionary<Tuple<Type,Type>, Func<object, object>>();
+        static readonly ConcurrentDictionary<Tuple<Type,Type>, Func<object, object>> specificconverters = new ConcurrentDictionary<Tuple<Type,Type>, Func<object, object>>();
 
         /// <summary>
         /// cctor
