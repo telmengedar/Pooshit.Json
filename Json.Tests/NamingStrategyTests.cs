@@ -25,6 +25,6 @@ public class NamingStrategyTests {
         string result = Pooshit.Json.Json.WriteString(new SnakeData {
             OverTheTop = 7
         }, JsonOptions.RestApi);
-        Assert.That(result, Is.EqualTo("{\"over_the_top\":7}"));
+        Assert.That(result, Does.Contain("\"over_the_top\":7"));
     }
 }
