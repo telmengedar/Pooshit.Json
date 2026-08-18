@@ -22,7 +22,7 @@ public class ReflectionModel : IModel {
     public ReflectionModel(Type modelType) => this.modelType = modelType;
 
     /// <inheritdoc />
-    public IEnumerable<IPropertyInfo> Properties => modelType.GetProperties().Select(p => new ReflectionProperty(p));
+    public IEnumerable<IPropertyInfo> Properties => modelType.GetProperties().Where(p => p.GetIndexParameters().Length == 0).Select(p => new ReflectionProperty(p));
 
     /// <inheritdoc />
     public IPropertyInfo GetProperty(string jsonName) {

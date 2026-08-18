@@ -239,7 +239,7 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
                 else {
                     BeginObject();
                     foreach (PropertyInfo property in data.GetType().GetProperties()) {
-                        if (!property.CanWrite || !property.CanRead || property.GetIndexParameters().Length > 0 || Attribute.IsDefined(property, typeof(IgnoreDataMemberAttribute)))
+                        if (!property.CanRead || property.GetIndexParameters().Length > 0 || Attribute.IsDefined(property, typeof(IgnoreDataMemberAttribute)))
                             continue;
 
                         object value = property.GetValue(data);
@@ -422,7 +422,7 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
                 else {
                     await BeginObjectAsync();
                     foreach (PropertyInfo property in data.GetType().GetProperties()) {
-                        if (!property.CanWrite || !property.CanRead || property.GetIndexParameters().Length > 0 || Attribute.IsDefined(property, typeof(IgnoreDataMemberAttribute)))
+                        if (!property.CanRead || property.GetIndexParameters().Length > 0 || Attribute.IsDefined(property, typeof(IgnoreDataMemberAttribute)))
                             continue;
 
                         object value = property.GetValue(data);

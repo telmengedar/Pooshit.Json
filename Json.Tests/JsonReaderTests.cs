@@ -298,4 +298,68 @@ public class JsonReaderTests {
         DoubleData result = await Pooshit.Json.Json.ReadAsync<DoubleData>("{\"value\":null}");
         Assert.That(double.IsNaN(result.Value));
     }
+
+    [Test, Parallelizable]
+    public void RoundTrip_ComputedGetOnlyProperty_PreservesOtherProperties() {
+        string json = Pooshit.Json.Json.WriteString(new RoundTripComputedData { Before = "before", After = "after" });
+        RoundTripComputedData deserialized = Pooshit.Json.Json.Read<RoundTripComputedData>(json);
+        Assert.That(deserialized.Before, Is.EqualTo("before"));
+        Assert.That(deserialized.After, Is.EqualTo("after"));
+    }
+
+    [Test, Parallelizable]
+    public async Task RoundTripAsync_ComputedGetOnlyProperty_PreservesOtherProperties() {
+        string json = await Pooshit.Json.Json.WriteStringAsync(new RoundTripComputedData { Before = "before", After = "after" });
+        RoundTripComputedData deserialized = await Pooshit.Json.Json.ReadAsync<RoundTripComputedData>(json);
+        Assert.That(deserialized.Before, Is.EqualTo("before"));
+        Assert.That(deserialized.After, Is.EqualTo("after"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Regression guard: a private-set property on the plain reflection path must refuse a wire value and keep its constructor default.")]
+    public void Read_PrivateSetPropertyWithoutReflectType_RefusesWireValueSync() {
+        PlainPrivateSetIdData deserialized = Pooshit.Json.Json.Read<PlainPrivateSetIdData>("{\"Job\":\"Dev\",\"Id\":666}");
+        Assert.That(deserialized.Job, Is.EqualTo("Dev"));
+        Assert.That(deserialized.Id, Is.EqualTo(0L));
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of the private-set wire-refusal regression guard.")]
+    public async Task ReadAsync_PrivateSetPropertyWithoutReflectType_RefusesWireValueAsync() {
+        PlainPrivateSetIdData deserialized = await Pooshit.Json.Json.ReadAsync<PlainPrivateSetIdData>("{\"Job\":\"Dev\",\"Id\":666}");
+        Assert.That(deserialized.Job, Is.EqualTo("Dev"));
+        Assert.That(deserialized.Id, Is.EqualTo(0L));
+    }
+
+    [Test, Parallelizable]
+    [Description("Parity guard: the source-generated model must also refuse a private setter from the wire, matching the reflection model.")]
+    public void Read_PrivateSetPropertyWithReflectType_RefusesWireValueSync() {
+        PrivateSetIdData deserialized = Pooshit.Json.Json.Read<PrivateSetIdData>("{\"Job\":\"Dev\",\"Id\":666}");
+        Assert.That(deserialized.Job, Is.EqualTo("Dev"));
+        Assert.That(deserialized.Id, Is.EqualTo(0L));
+    }
+
+    [Test, Parallelizable]
+    [Description("Regression guard: a protected-set property on the plain reflection path must refuse a wire value and keep its constructor default.")]
+    public void Read_ProtectedSetPropertyWithoutReflectType_RefusesWireValueSync() {
+        PlainProtectedSetIdData deserialized = Pooshit.Json.Json.Read<PlainProtectedSetIdData>("{\"Job\":\"Dev\",\"Id\":666}");
+        Assert.That(deserialized.Job, Is.EqualTo("Dev"));
+        Assert.That(deserialized.Id, Is.EqualTo(0L));
+    }
+
+    [Test, Parallelizable]
+    [Description("Regression guard: an internal-set property on the plain reflection path must refuse a wire value and keep its constructor default.")]
+    public void Read_InternalSetPropertyWithoutReflectType_RefusesWireValueSync() {
+        PlainInternalSetIdData deserialized = Pooshit.Json.Json.Read<PlainInternalSetIdData>("{\"Job\":\"Dev\",\"Id\":666}");
+        Assert.That(deserialized.Job, Is.EqualTo("Dev"));
+        Assert.That(deserialized.Id, Is.EqualTo(0L));
+    }
+
+    [Test, Parallelizable]
+    [Description("Characterization guard: init setters remain wire-writable. This is separate, tracked debt (DiVoid #8452) and is intentionally out of scope here.")]
+    public void Read_InitOnlyPropertyRemainsWireWritableSync() {
+        InitIdData deserialized = Pooshit.Json.Json.Read<InitIdData>("{\"Job\":\"Dev\",\"Id\":666}");
+        Assert.That(deserialized.Job, Is.EqualTo("Dev"));
+        Assert.That(deserialized.Id, Is.EqualTo(666L));
+    }
 }

@@ -38,5 +38,5 @@ public class ReflectionProperty : IPropertyInfo {
     public bool HasGetter => propertyInfo.CanRead;
 
     /// <inheritdoc />
-    public bool HasSetter => propertyInfo.CanWrite;
+    public bool HasSetter => propertyInfo.SetMethod?.IsPublic == true;
 }

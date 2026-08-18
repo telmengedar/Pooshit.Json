@@ -240,5 +240,35 @@ namespace Json.Tests {
             string data = Encoding.UTF8.GetString(buffer.ToArray());
             Assert.That(data, Is.EqualTo("\"127.0.0.1\""));
         }
+
+        [Test, Parallelizable]
+        public void WriteValue_ComputedGetOnlyProperty_EmitsValue() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new ComputedIdData { Job = "Dev" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Contain("\"Id\":918273645"));
+        }
+
+        [Test, Parallelizable]
+        public async Task WriteValueAsync_ComputedGetOnlyProperty_EmitsValue() {
+            MemoryStream buffer = new();
+            await using (JsonStreamWriter writer = new(buffer)) {
+                await writer.WriteValueAsync(new ComputedIdData { Job = "Dev" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Contain("\"Id\":918273645"));
+        }
+
+        [Test, Parallelizable]
+        public void WriteValue_SetOnlyProperty_StaysOmitted() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new SetOnlyIdData { Job = "Dev", Id = 918273645L });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Not.Contain("\"Id\""));
+        }
     }
 }

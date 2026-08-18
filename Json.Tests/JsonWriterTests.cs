@@ -712,4 +712,76 @@ public class JsonWriterTests {
         string result = await Pooshit.Json.Json.WriteStringAsync(IPAddress.Loopback);
         Assert.That(result, Is.EqualTo("\"127.0.0.1\""));
     }
+
+    [Test, Parallelizable]
+    public void Write_ComputedGetOnlyProperty_EmitsValue() {
+        string result = Pooshit.Json.Json.WriteString(new ComputedIdData { Job = "Dev" });
+        Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteAsync_ComputedGetOnlyProperty_EmitsValue() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new ComputedIdData { Job = "Dev" });
+        Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
+
+    [Test, Parallelizable]
+    public void Write_AnonymousType_EmitsRealKeys() {
+        string result = Pooshit.Json.Json.WriteString(new { name = "gangolf", value = 42 });
+        Assert.That(result, Is.EqualTo("{\"name\":\"gangolf\",\"value\":42}"));
+    }
+
+    [Test, Parallelizable]
+    public async Task WriteAsync_AnonymousType_EmitsRealKeys() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new { name = "gangolf", value = 42 });
+        Assert.That(result, Is.EqualTo("{\"name\":\"gangolf\",\"value\":42}"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Characterization guard: init-only properties emit on write. Read-side wire-tamperability of init is separate, tracked debt (DiVoid #8452) and is unaffected here.")]
+    public void Write_InitOnlyProperty_Emits() {
+        string result = Pooshit.Json.Json.WriteString(new InitIdData { Job = "Dev", Id = 918273645L });
+        Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
+
+    [Test, Parallelizable]
+    public void Write_SetOnlyProperty_StaysOmitted() {
+        SetOnlyIdData data = new() { Job = "Dev", Id = 918273645L };
+        string result = Pooshit.Json.Json.WriteString(data);
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    public void Write_PrivateSetPropertyWithReflectType_Emits() {
+        string result = Pooshit.Json.Json.WriteString(new PrivateSetIdData(918273645L) { Job = "Dev" });
+        Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Regression guard: a get-only indexer on a plain reflection DTO must not throw and must be omitted from output.")]
+    public void Write_GetOnlyIndexerOnPlainDto_OmitsIndexerEmitsOtherProperties() {
+        string result = Pooshit.Json.Json.WriteString(new PlainDataWithGetOnlyIndexer { Job = "Dev" });
+        Assert.That(result, Is.EqualTo("{\"Job\":\"Dev\"}"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of the get-only indexer regression guard.")]
+    public async Task WriteAsync_GetOnlyIndexerOnPlainDto_OmitsIndexerEmitsOtherProperties() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new PlainDataWithGetOnlyIndexer { Job = "Dev" });
+        Assert.That(result, Is.EqualTo("{\"Job\":\"Dev\"}"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Regression guard: a private-set property on the plain reflection path must still emit on write.")]
+    public void Write_PrivateSetPropertyWithoutReflectType_StillEmits() {
+        string result = Pooshit.Json.Json.WriteString(new PlainPrivateSetIdData(918273645L) { Job = "Dev" });
+        Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of the private-set write-emission regression guard.")]
+    public async Task WriteAsync_PrivateSetPropertyWithoutReflectType_StillEmits() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new PlainPrivateSetIdData(918273645L) { Job = "Dev" });
+        Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
 }

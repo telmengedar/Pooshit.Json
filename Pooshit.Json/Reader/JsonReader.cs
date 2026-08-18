@@ -178,8 +178,7 @@ public class JsonReader : IJsonReader {
                 throw new FormatException("Missing ':' in json dictionary");
 
             IPropertyInfo property = model.GetProperty(key.ToString());
-            if (property == null) {
-                // read value and skip property
+            if (property == null || !property.HasSetter) {
                 Read(typeof(object), reader, ref state);
             }
             else{
@@ -291,8 +290,7 @@ public class JsonReader : IJsonReader {
                 throw new FormatException("Missing ':' in json dictionary");
 
             IPropertyInfo property = model.GetProperty(key.ToString());
-            if (property == null) {
-                // read value and skip property
+            if (property == null || !property.HasSetter) {
                 await ReadAsync(typeof(object), reader, state);
             }
             else{
