@@ -1,6 +1,6 @@
 # Architectural Document: Opt-In Write Eligibility for Get-Only Properties
 
-**Status:** proposed · **Repo:** `Pooshit.Json` · **Base:** `master` @ `b1580b1` · **Author:** Sarah (architect) · **Date:** 2026-08-19
+**Status:** implemented (PR #7, pending review) · **Repo:** `Pooshit.Json` · **Base:** `master` @ `b1580b1` · **Author:** Sarah (architect) · **Date:** 2026-08-19
 **Drivers:** DiVoid **#8522** (severity-1 regression) · DiVoid **#8444** (original request)
 **Standards applied:** Design Contracts **#1136** (esp. §1 KISS/DRY/YAGNI, §5 Pre-Design Checklist — audited in §15 below) · Code Contracts **#114 §0**
 **Concept nodes this changes:** **#3340** (serialize flow / write-eligibility) · **#3342** (model resolution & property discovery). **#3341** (read flow) is *unchanged* — see §9.

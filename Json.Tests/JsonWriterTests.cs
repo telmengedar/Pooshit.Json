@@ -775,7 +775,21 @@ public class JsonWriterTests {
     }
 
     [Test, Parallelizable]
-    [Description("Break 2 guard (design §17): a private-set property on the plain reflection path no longer emits without [JsonWrite]. There is no single 0.4.0 'before' for this shape (design §6.3) - the two model paths now agree on omission.")]
+    [Description("D5 guard (design §7.4): [JsonWrite] on a get-only indexer must not crash - the indexer filter keeps it reachable but safe.")]
+    public void Write_JsonWriteOnGetOnlyIndexer_OmitsIndexerEmitsOtherProperties() {
+        string result = Pooshit.Json.Json.WriteString(new PlainDataWithJsonWriteGetOnlyIndexer { Job = "Dev" });
+        Assert.That(result, Is.EqualTo("{\"Job\":\"Dev\"}"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of the D5 get-only-indexer-with-[JsonWrite] guard.")]
+    public async Task WriteAsync_JsonWriteOnGetOnlyIndexer_OmitsIndexerEmitsOtherProperties() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new PlainDataWithJsonWriteGetOnlyIndexer { Job = "Dev" });
+        Assert.That(result, Is.EqualTo("{\"Job\":\"Dev\"}"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Break 2 guard (design §17): a private-set property on the plain reflection path no longer emits without [JsonWrite].")]
     public void Write_PrivateSetPropertyWithoutReflectType_StaysOmitted() {
         string result = Pooshit.Json.Json.WriteString(new PlainPrivateSetIdData(918273645L) { Job = "Dev" });
         Assert.That(result, Does.Not.Contain("\"Id\""));
@@ -909,7 +923,7 @@ public class JsonWriterTests {
     }
 
     [Test, Parallelizable]
-    [Description("S1 regression guard (DiVoid #8522): serializing a thrown System.Exception (TargetSite and InnerException populated, matching what ErrorHandlerMiddleware actually catches) must terminate with finite output. TargetSite.DeclaringType is reference-equal to its own Type.UnderlyingSystemType, so an unbounded walk would not terminate; all these members are get-only and cannot carry [JsonWrite].")]
+    [Description("S1 regression guard (DiVoid #8522): a thrown System.Exception must terminate with finite output.")]
     public void Write_Exception_TerminatesWithFiniteOutputExcludingDangerousMembers() {
         string result = Pooshit.Json.Json.WriteString(ThrownWithTargetSiteAndInnerException());
         Assert.That(result, Does.Not.Contain("\"TargetSite\""));
@@ -933,7 +947,7 @@ public class JsonWriterTests {
     }
 
     [Test, Parallelizable]
-    [Description("S1 regression guard (DiVoid #8522): serializing a System.Type must terminate with finite output. Type.UnderlyingSystemType is self-referential (returns 'this') and is get-only, so the walk must never start.")]
+    [Description("S1 regression guard (DiVoid #8522): serializing a System.Type must terminate with finite output.")]
     public void Write_Type_TerminatesWithFiniteOutputExcludingDangerousMembers() {
         string result = Pooshit.Json.Json.WriteString(typeof(string));
         Assert.That(result, Does.Not.Contain("\"UnderlyingSystemType\""));
