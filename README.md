@@ -42,6 +42,16 @@ The behavior when writing json can be modified by specifying **JsonOptions** as 
 |ExcludeNullProperties|specify true to suppress writing of any null values|
 |NamingStrategy|Delegate called when writing property names. Standard strategies are available under using the **NamingStrategies** class|
 
+### Writing properties without a public setter
+A property is written iff it is readable, not marked **IgnoreDataMember**, not an indexer, and (it has a public setter or it carries **JsonWrite**).
+Mark a get-only, computed, or non-publicly-settable property with `[JsonWrite]` to have it written despite having no public setter.
+Properties with a public setter (including `init`) need nothing - they are written as before.
+
+```
+[JsonWrite]
+public long Id => ComputeId();
+```
+
 ### Custom Value Types
 If values are to be converted to different types than well known framework types a custom converter can be specified with
 
