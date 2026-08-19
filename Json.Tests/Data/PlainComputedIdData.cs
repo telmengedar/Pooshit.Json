@@ -1,10 +1,8 @@
 using Pooshit.Json;
-using Pooshit.Reflection;
 
 namespace Json.Tests.Data;
 
-[ReflectType]
-public class ComputedIdData {
+public class PlainComputedIdData {
     public string Job { get; set; }
 
     [JsonWrite]

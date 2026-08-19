@@ -726,15 +726,17 @@ public class JsonWriterTests {
     }
 
     [Test, Parallelizable]
-    public void Write_AnonymousType_EmitsRealKeys() {
+    [Description("Accepted consequence of opt-in write eligibility (DiVoid #3348, design §10): anonymous types are uniformly get-only and cannot carry [JsonWrite], so they serialize to an empty object again.")]
+    public void Write_AnonymousType_EmitsEmptyObject() {
         string result = Pooshit.Json.Json.WriteString(new { name = "gangolf", value = 42 });
-        Assert.That(result, Is.EqualTo("{\"name\":\"gangolf\",\"value\":42}"));
+        Assert.That(result, Is.EqualTo("{}"));
     }
 
     [Test, Parallelizable]
-    public async Task WriteAsync_AnonymousType_EmitsRealKeys() {
+    [Description("Accepted consequence of opt-in write eligibility (DiVoid #3348, design §10): anonymous types are uniformly get-only and cannot carry [JsonWrite], so they serialize to an empty object again.")]
+    public async Task WriteAsync_AnonymousType_EmitsEmptyObject() {
         string result = await Pooshit.Json.Json.WriteStringAsync(new { name = "gangolf", value = 42 });
-        Assert.That(result, Is.EqualTo("{\"name\":\"gangolf\",\"value\":42}"));
+        Assert.That(result, Is.EqualTo("{}"));
     }
 
     [Test, Parallelizable]
@@ -752,9 +754,10 @@ public class JsonWriterTests {
     }
 
     [Test, Parallelizable]
-    public void Write_PrivateSetPropertyWithReflectType_Emits() {
+    [Description("D6 (design §6.3): a private-set property on the source-generated model path no longer emits without [JsonWrite].")]
+    public void Write_PrivateSetPropertyWithReflectType_StaysOmitted() {
         string result = Pooshit.Json.Json.WriteString(new PrivateSetIdData(918273645L) { Job = "Dev" });
-        Assert.That(result, Does.Contain("\"Id\":918273645"));
+        Assert.That(result, Does.Not.Contain("\"Id\""));
     }
 
     [Test, Parallelizable]
@@ -772,16 +775,185 @@ public class JsonWriterTests {
     }
 
     [Test, Parallelizable]
-    [Description("Regression guard: a private-set property on the plain reflection path must still emit on write.")]
-    public void Write_PrivateSetPropertyWithoutReflectType_StillEmits() {
+    [Description("D5 guard (design §7.4): [JsonWrite] on a get-only indexer must not crash - the indexer filter keeps it reachable but safe.")]
+    public void Write_JsonWriteOnGetOnlyIndexer_OmitsIndexerEmitsOtherProperties() {
+        string result = Pooshit.Json.Json.WriteString(new PlainDataWithJsonWriteGetOnlyIndexer { Job = "Dev" });
+        Assert.That(result, Is.EqualTo("{\"Job\":\"Dev\"}"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of the D5 get-only-indexer-with-[JsonWrite] guard.")]
+    public async Task WriteAsync_JsonWriteOnGetOnlyIndexer_OmitsIndexerEmitsOtherProperties() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new PlainDataWithJsonWriteGetOnlyIndexer { Job = "Dev" });
+        Assert.That(result, Is.EqualTo("{\"Job\":\"Dev\"}"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Break 2 guard (design §17): a private-set property on the plain reflection path no longer emits without [JsonWrite].")]
+    public void Write_PrivateSetPropertyWithoutReflectType_StaysOmitted() {
         string result = Pooshit.Json.Json.WriteString(new PlainPrivateSetIdData(918273645L) { Job = "Dev" });
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of the Break 2 guard (design §17).")]
+    public async Task WriteAsync_PrivateSetPropertyWithoutReflectType_StaysOmitted() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new PlainPrivateSetIdData(918273645L) { Job = "Dev" });
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    [Description("S3: a get-only property without [JsonWrite] stays omitted on the source-generated model path.")]
+    public void Write_GetOnlyPropertyWithReflectType_StaysOmitted() {
+        string result = Pooshit.Json.Json.WriteString(new GetOnlyIdData { Job = "Dev" });
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of S3 on the source-generated model path.")]
+    public async Task WriteAsync_GetOnlyPropertyWithReflectType_StaysOmitted() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new GetOnlyIdData { Job = "Dev" });
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    [Description("S3: a get-only property without [JsonWrite] stays omitted on the plain reflection model path.")]
+    public void Write_GetOnlyPropertyWithoutReflectType_StaysOmitted() {
+        string result = Pooshit.Json.Json.WriteString(new PlainGetOnlyIdData { Job = "Dev" });
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of S3 on the plain reflection model path.")]
+    public async Task WriteAsync_GetOnlyPropertyWithoutReflectType_StaysOmitted() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new PlainGetOnlyIdData { Job = "Dev" });
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    [Description("S2/S4: a get-only property with [JsonWrite] emits on the plain reflection model path, agreeing with the source-generated path.")]
+    public void Write_ComputedGetOnlyPropertyWithoutReflectType_EmitsValue() {
+        string result = Pooshit.Json.Json.WriteString(new PlainComputedIdData { Job = "Dev" });
         Assert.That(result, Does.Contain("\"Id\":918273645"));
     }
 
     [Test, Parallelizable]
-    [Description("Async counterpart of the private-set write-emission regression guard.")]
-    public async Task WriteAsync_PrivateSetPropertyWithoutReflectType_StillEmits() {
-        string result = await Pooshit.Json.Json.WriteStringAsync(new PlainPrivateSetIdData(918273645L) { Job = "Dev" });
+    [Description("Async counterpart of the S2/S4 reflection-path agreement guard.")]
+    public async Task WriteAsync_ComputedGetOnlyPropertyWithoutReflectType_EmitsValue() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new PlainComputedIdData { Job = "Dev" });
         Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
+
+    [Test, Parallelizable]
+    [Description("D6 remedy is real: a private-set property with [JsonWrite] emits on the source-generated model path.")]
+    public void Write_PrivateSetPropertyWithJsonWriteAndReflectType_Emits() {
+        string result = Pooshit.Json.Json.WriteString(new JsonWritePrivateSetIdData(918273645L) { Job = "Dev" });
+        Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of the D6 remedy guard on the source-generated model path.")]
+    public async Task WriteAsync_PrivateSetPropertyWithJsonWriteAndReflectType_Emits() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new JsonWritePrivateSetIdData(918273645L) { Job = "Dev" });
+        Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
+
+    [Test, Parallelizable]
+    [Description("D6 remedy is real: a private-set property with [JsonWrite] emits on the plain reflection model path.")]
+    public void Write_PrivateSetPropertyWithJsonWriteWithoutReflectType_Emits() {
+        string result = Pooshit.Json.Json.WriteString(new PlainJsonWritePrivateSetIdData(918273645L) { Job = "Dev" });
+        Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of the D6 remedy guard on the plain reflection model path.")]
+    public async Task WriteAsync_PrivateSetPropertyWithJsonWriteWithoutReflectType_Emits() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(new PlainJsonWritePrivateSetIdData(918273645L) { Job = "Dev" });
+        Assert.That(result, Does.Contain("\"Id\":918273645"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Design §6.2 clause 2: [IgnoreDataMember] beats [JsonWrite] - the more restrictive attribute wins.")]
+    public void Write_JsonWriteWithIgnoreDataMember_StaysOmitted() {
+        string result = Pooshit.Json.Json.WriteString(new JsonWriteIgnoredIdData { Job = "Dev" });
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    [Description("Design §6.2 clause 1: [JsonWrite] on a set-only property has no effect and does not throw - readable stays an unconditional precondition.")]
+    public void Write_JsonWriteOnSetOnlyProperty_StaysOmittedNoThrow() {
+        string result = Pooshit.Json.Json.WriteString(new JsonWriteSetOnlyIdData { Job = "Dev", Id = 918273645L });
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    [Description("Design §6.2/§12.1: [JsonWrite] and [DataMember(Name=...)] are orthogonal and composable - nomination from one, key name from the other.")]
+    public void Write_JsonWriteWithDataMemberName_EmitsUnderDataMemberName() {
+        string result = Pooshit.Json.Json.WriteString(new JsonWriteDataMemberIdData { Job = "Dev" });
+        Assert.That(result, Does.Contain("\"customId\":918273645"));
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    [Description("D3: [JsonWrite] applies only to the declaration it is written on (Inherited = false) - an override that does not re-declare it stays omitted on the source-generated model path.")]
+    public void Write_JsonWriteOnOverriddenBasePropertyWithReflectType_StaysOmitted() {
+        string result = Pooshit.Json.Json.WriteString(new JsonWriteOverrideDerivedData { Job = "Dev" });
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    [Test, Parallelizable]
+    [Description("D3: [JsonWrite] applies only to the declaration it is written on (Inherited = false) - an override that does not re-declare it stays omitted on the plain reflection model path too, so both model paths agree.")]
+    public void Write_JsonWriteOnOverriddenBasePropertyWithoutReflectType_StaysOmitted() {
+        string result = Pooshit.Json.Json.WriteString(new PlainJsonWriteOverrideDerivedData { Job = "Dev" });
+        Assert.That(result, Does.Not.Contain("\"Id\""));
+    }
+
+    static Exception ThrownWithTargetSiteAndInnerException() {
+        try {
+            try {
+                throw new InvalidOperationException("inner");
+            }
+            catch (Exception inner) {
+                throw new Exception("boom", inner);
+            }
+        }
+        catch (Exception thrown) {
+            return thrown;
+        }
+    }
+
+    [Test, Parallelizable]
+    [Description("S1 regression guard (DiVoid #8522): a thrown System.Exception must terminate with finite output.")]
+    public void Write_Exception_TerminatesWithFiniteOutputExcludingDangerousMembers() {
+        string result = Pooshit.Json.Json.WriteString(ThrownWithTargetSiteAndInnerException());
+        Assert.That(result, Does.Not.Contain("\"TargetSite\""));
+        Assert.That(result, Does.Not.Contain("\"Data\""));
+        Assert.That(result, Does.Not.Contain("\"InnerException\""));
+        Assert.That(result, Does.Not.Contain("\"StackTrace\""));
+        Dictionary<string, object> parsed = Pooshit.Json.Json.Read<Dictionary<string, object>>(result);
+        Assert.NotNull(parsed);
+    }
+
+    [Test, Parallelizable]
+    [Description("Async counterpart of the S1 Exception regression guard (DiVoid #8522).")]
+    public async Task WriteAsync_Exception_TerminatesWithFiniteOutputExcludingDangerousMembers() {
+        string result = await Pooshit.Json.Json.WriteStringAsync(ThrownWithTargetSiteAndInnerException());
+        Assert.That(result, Does.Not.Contain("\"TargetSite\""));
+        Assert.That(result, Does.Not.Contain("\"Data\""));
+        Assert.That(result, Does.Not.Contain("\"InnerException\""));
+        Assert.That(result, Does.Not.Contain("\"StackTrace\""));
+        Dictionary<string, object> parsed = Pooshit.Json.Json.Read<Dictionary<string, object>>(result);
+        Assert.NotNull(parsed);
+    }
+
+    [Test, Parallelizable]
+    [Description("S1 regression guard (DiVoid #8522): serializing a System.Type must terminate with finite output.")]
+    public void Write_Type_TerminatesWithFiniteOutputExcludingDangerousMembers() {
+        string result = Pooshit.Json.Json.WriteString(typeof(string));
+        Assert.That(result, Does.Not.Contain("\"UnderlyingSystemType\""));
+        Assert.That(result, Does.Not.Contain("\"DeclaringType\""));
+        Assert.That(result, Does.Not.Contain("\"BaseType\""));
+        Dictionary<string, object> parsed = Pooshit.Json.Json.Read<Dictionary<string, object>>(result);
+        Assert.NotNull(parsed);
     }
 }

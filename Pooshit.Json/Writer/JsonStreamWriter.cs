@@ -241,6 +241,8 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
                     foreach (PropertyInfo property in data.GetType().GetProperties()) {
                         if (!property.CanRead || property.GetIndexParameters().Length > 0 || Attribute.IsDefined(property, typeof(IgnoreDataMemberAttribute)))
                             continue;
+                        if (property.SetMethod?.IsPublic != true && !Attribute.IsDefined(property, typeof(JsonWriteAttribute)))
+                            continue;
 
                         object value = property.GetValue(data);
                         if (value == null && options.ExcludeNullProperties)
@@ -423,6 +425,8 @@ public class JsonStreamWriter : IJsonStreamWriter, IDisposable
                     await BeginObjectAsync();
                     foreach (PropertyInfo property in data.GetType().GetProperties()) {
                         if (!property.CanRead || property.GetIndexParameters().Length > 0 || Attribute.IsDefined(property, typeof(IgnoreDataMemberAttribute)))
+                            continue;
+                        if (property.SetMethod?.IsPublic != true && !Attribute.IsDefined(property, typeof(JsonWriteAttribute)))
                             continue;
 
                         object value = property.GetValue(data);

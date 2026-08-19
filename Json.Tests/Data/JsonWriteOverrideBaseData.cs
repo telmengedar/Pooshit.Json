@@ -1,12 +1,10 @@
 using Pooshit.Json;
-using Pooshit.Reflection;
 
 namespace Json.Tests.Data;
 
-[ReflectType]
-public class ComputedIdData {
+public class JsonWriteOverrideBaseData {
     public string Job { get; set; }
 
     [JsonWrite]
-    public long Id => 918273645L;
+    public virtual long Id => 918273645L;
 }
