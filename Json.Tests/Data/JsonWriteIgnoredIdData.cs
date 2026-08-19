@@ -1,12 +1,11 @@
+using System.Runtime.Serialization;
 using Pooshit.Json;
-using Pooshit.Reflection;
 
 namespace Json.Tests.Data;
 
-[ReflectType]
-public class ComputedIdData {
+public class JsonWriteIgnoredIdData {
     public string Job { get; set; }
 
-    [JsonWrite]
+    [JsonWrite, IgnoreDataMember]
     public long Id => 918273645L;
 }

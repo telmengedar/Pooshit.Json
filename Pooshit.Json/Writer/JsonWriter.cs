@@ -191,6 +191,8 @@ public class JsonWriter : IJsonWriter {
                     foreach (IPropertyInfo property in model.Properties) {
                         if (!property.HasGetter || property.Attributes.Any(a => a is IgnoreDataMemberAttribute))
                             continue;
+                        if (!property.HasSetter && property.Attributes.All(a => a is not JsonWriteAttribute))
+                            continue;
 
                         object value = property.GetValue(data);
                         if (value == null && options.ExcludeNullProperties)
@@ -404,6 +406,8 @@ public class JsonWriter : IJsonWriter {
                     IModel model = Model.GetModel(data.GetType());
                     foreach (IPropertyInfo property in model.Properties) {
                         if (!property.HasGetter || property.Attributes.Any(a => a is IgnoreDataMemberAttribute))
+                            continue;
+                        if (!property.HasSetter && property.Attributes.All(a => a is not JsonWriteAttribute))
                             continue;
 
                         object value = property.GetValue(data);

@@ -270,5 +270,140 @@ namespace Json.Tests {
             string data = Encoding.UTF8.GetString(buffer.ToArray());
             Assert.That(data, Does.Not.Contain("\"Id\""));
         }
+
+        [Test, Parallelizable]
+        [Description("S3: a get-only property without [JsonWrite] stays omitted on the raw-reflection stream writer path.")]
+        public void WriteValue_GetOnlyProperty_StaysOmitted() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new PlainGetOnlyIdData { Job = "Dev" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Not.Contain("\"Id\""));
+        }
+
+        [Test, Parallelizable]
+        [Description("Async counterpart of S3 on the raw-reflection stream writer path.")]
+        public async Task WriteValueAsync_GetOnlyProperty_StaysOmitted() {
+            MemoryStream buffer = new();
+            await using (JsonStreamWriter writer = new(buffer)) {
+                await writer.WriteValueAsync(new PlainGetOnlyIdData { Job = "Dev" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Not.Contain("\"Id\""));
+        }
+
+        [Test, Parallelizable]
+        [Description("Critical implementation instruction (design §7.2): the stream writer gate must test SetMethod?.IsPublic != true, not !CanWrite, or a private-set property would emit here while the other writer paths omit it. D6 remedy: [JsonWrite] on a private-set property emits.")]
+        public void WriteValue_PrivateSetPropertyWithJsonWrite_Emits() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new PlainJsonWritePrivateSetIdData(918273645L) { Job = "Dev" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Contain("\"Id\":918273645"));
+        }
+
+        [Test, Parallelizable]
+        [Description("Break 2 guard (design §17) on the stream writer path: a private-set property without [JsonWrite] stays omitted.")]
+        public void WriteValue_PrivateSetPropertyWithoutJsonWrite_StaysOmitted() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new PlainPrivateSetIdData(918273645L) { Job = "Dev" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Not.Contain("\"Id\""));
+        }
+
+        [Test, Parallelizable]
+        [Description("Design §6.2 clause 2 on the stream writer path: [IgnoreDataMember] beats [JsonWrite].")]
+        public void WriteValue_JsonWriteWithIgnoreDataMember_StaysOmitted() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new JsonWriteIgnoredIdData { Job = "Dev" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Not.Contain("\"Id\""));
+        }
+
+        [Test, Parallelizable]
+        [Description("Design §6.2 clause 1 on the stream writer path: [JsonWrite] on a set-only property has no effect and does not throw.")]
+        public void WriteValue_JsonWriteOnSetOnlyProperty_StaysOmittedNoThrow() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new JsonWriteSetOnlyIdData { Job = "Dev", Id = 918273645L });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Not.Contain("\"Id\""));
+        }
+
+        [Test, Parallelizable]
+        [Description("Residual, pre-existing and explicitly not fixed here (DiVoid #8466, design §7.3): the stream writer bypasses the model layer and ignores [DataMember(Name=...)], so a [JsonWrite] property emits under its raw property name here, not the DataMember name.")]
+        public void WriteValue_JsonWriteWithDataMemberName_EmitsUnderRawPropertyName() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new JsonWriteDataMemberIdData { Job = "Dev" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Contain("\"Id\":918273645"));
+            Assert.That(data, Does.Not.Contain("\"customId\""));
+        }
+
+        [Test, Parallelizable]
+        [Description("D3 on the stream writer path: [JsonWrite] applies only to the declaration it is written on (Inherited = false) - an override that does not re-declare it stays omitted.")]
+        public void WriteValue_JsonWriteOnOverriddenBaseProperty_StaysOmitted() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(new PlainJsonWriteOverrideDerivedData { Job = "Dev" });
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Not.Contain("\"Id\""));
+        }
+
+        static Exception ThrownWithTargetSiteAndInnerException() {
+            try {
+                try {
+                    throw new InvalidOperationException("inner");
+                }
+                catch (Exception inner) {
+                    throw new Exception("boom", inner);
+                }
+            }
+            catch (Exception thrown) {
+                return thrown;
+            }
+        }
+
+        [Test, Parallelizable]
+        [Description("S1 regression guard (DiVoid #8522) on the stream writer path: serializing a thrown System.Exception (TargetSite and InnerException populated, matching what ErrorHandlerMiddleware actually catches) must terminate with finite output and exclude the dangerous self-referential members.")]
+        public void WriteValue_Exception_TerminatesWithFiniteOutputExcludingDangerousMembers() {
+            MemoryStream buffer = new();
+            using (JsonStreamWriter writer = new(buffer)) {
+                writer.WriteValue(ThrownWithTargetSiteAndInnerException());
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Not.Contain("\"TargetSite\""));
+            Assert.That(data, Does.Not.Contain("\"Data\""));
+            Assert.That(data, Does.Not.Contain("\"InnerException\""));
+            Assert.That(data, Does.Not.Contain("\"StackTrace\""));
+            object parsed = Pooshit.Json.Json.Read(data);
+            Assert.NotNull(parsed);
+        }
+
+        [Test, Parallelizable]
+        [Description("Async counterpart of the S1 Exception regression guard (DiVoid #8522) on the stream writer path.")]
+        public async Task WriteValueAsync_Exception_TerminatesWithFiniteOutputExcludingDangerousMembers() {
+            MemoryStream buffer = new();
+            await using (JsonStreamWriter writer = new(buffer)) {
+                await writer.WriteValueAsync(ThrownWithTargetSiteAndInnerException());
+            }
+            string data = Encoding.UTF8.GetString(buffer.ToArray());
+            Assert.That(data, Does.Not.Contain("\"TargetSite\""));
+            Assert.That(data, Does.Not.Contain("\"Data\""));
+            Assert.That(data, Does.Not.Contain("\"InnerException\""));
+            Assert.That(data, Does.Not.Contain("\"StackTrace\""));
+            object parsed = Pooshit.Json.Json.Read(data);
+            Assert.NotNull(parsed);
+        }
     }
 }
