@@ -382,7 +382,7 @@ namespace Json.Tests {
         }
 
         [Test, Parallelizable]
-        [Description("Residual, pre-existing and explicitly not fixed here (DiVoid #8466, design §7.3): the stream writer bypasses the model layer and ignores [DataMember(Name=...)], so a [JsonWrite] property emits under its raw property name here, not the DataMember name.")]
+        [Description("(DiVoid #8466, design §7.3): the stream writer bypasses the model layer and ignores [DataMember(Name=...)], so a [JsonWrite] property emits under its raw property name here, not the DataMember name.")]
         public void WriteValue_JsonWriteWithDataMemberName_EmitsUnderRawPropertyName() {
             MemoryStream buffer = new();
             using (JsonStreamWriter writer = new(buffer)) {
