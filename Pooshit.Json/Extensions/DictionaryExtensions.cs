@@ -23,7 +23,7 @@ public static class DictionaryExtensions {
         IModel typemodel = Model.GetModel(type);
         foreach (KeyValuePair<string, object> kvp in dictionary) {
             IPropertyInfo property = typemodel.GetProperty(kvp.Key);
-            if (property == null)
+            if (property == null || !property.HasSetter)
                 continue;
             if (property.PropertyType.IsArray)
                 property.SetValue(host, kvp.Value.ReadValueAsArray(property.PropertyType.GetElementType(), errorHandler));
