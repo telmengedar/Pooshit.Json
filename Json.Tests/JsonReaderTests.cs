@@ -407,6 +407,33 @@ public class JsonReaderTests {
     }
 
     [Test, Parallelizable]
+    [Description("Structure-overload twin of the private-set wire-refusal regression guard: DiVoid #8899 CF-2, the same HasSetter predicate must refuse a non-public setter through Json.Read<T>(object) too.")]
+    public void Read_PrivateSetPropertyWithoutReflectType_RefusesWireValueFromStructure() {
+        object structure = Pooshit.Json.Json.Read<object>("{\"Job\":\"Dev\",\"Id\":666}");
+        PlainPrivateSetIdData deserialized = Pooshit.Json.Json.Read<PlainPrivateSetIdData>(structure);
+        Assert.That(deserialized.Job, Is.EqualTo("Dev"));
+        Assert.That(deserialized.Id, Is.EqualTo(0L));
+    }
+
+    [Test, Parallelizable]
+    [Description("Structure-overload twin of the protected-set wire-refusal regression guard: DiVoid #8899 CF-2, the same HasSetter predicate must refuse a non-public setter through Json.Read<T>(object) too.")]
+    public void Read_ProtectedSetPropertyWithoutReflectType_RefusesWireValueFromStructure() {
+        object structure = Pooshit.Json.Json.Read<object>("{\"Job\":\"Dev\",\"Id\":666}");
+        PlainProtectedSetIdData deserialized = Pooshit.Json.Json.Read<PlainProtectedSetIdData>(structure);
+        Assert.That(deserialized.Job, Is.EqualTo("Dev"));
+        Assert.That(deserialized.Id, Is.EqualTo(0L));
+    }
+
+    [Test, Parallelizable]
+    [Description("Structure-overload twin of the internal-set wire-refusal regression guard: DiVoid #8899 CF-2, the same HasSetter predicate must refuse a non-public setter through Json.Read<T>(object) too.")]
+    public void Read_InternalSetPropertyWithoutReflectType_RefusesWireValueFromStructure() {
+        object structure = Pooshit.Json.Json.Read<object>("{\"Job\":\"Dev\",\"Id\":666}");
+        PlainInternalSetIdData deserialized = Pooshit.Json.Json.Read<PlainInternalSetIdData>(structure);
+        Assert.That(deserialized.Job, Is.EqualTo("Dev"));
+        Assert.That(deserialized.Id, Is.EqualTo(0L));
+    }
+
+    [Test, Parallelizable]
     [Description("Characterization guard: init setters remain wire-writable. This is separate, tracked debt (DiVoid #8452) and is intentionally out of scope here.")]
     public void Read_InitOnlyPropertyRemainsWireWritableSync() {
         InitIdData deserialized = Pooshit.Json.Json.Read<InitIdData>("{\"Job\":\"Dev\",\"Id\":666}");
