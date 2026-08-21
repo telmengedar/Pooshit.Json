@@ -215,79 +215,91 @@ public static class JPath {
     public static void Set(object data, string path, object value, bool ignoreCase) {
         if (data == null)
             throw new ArgumentNullException(nameof(data), "base structure needs to be non null");
-            
+
         JPathToken[] tokens = Parse(path).ToArray();
+        Action<object> writeBack = null;
         for (int i = 0; i < tokens.Length - 1; ++i) {
             JPathToken token = tokens[i];
-                
+
             if (token.Index.HasValue) {
                 if (data is Array array) {
                     if (token.Index.Value >= array.Length) {
                         ResizeArray(ref array, token.Index.Value + 1);
-                        if (array.GetValue(token.Index.Value) == null) {
-                            if (tokens[i + 1].Index.HasValue)
-                                array.SetValue(data = new List<object>(), token.Index.Value);
-                            else array.SetValue(data = new Dictionary<string, object>(), token.Index.Value);
-                        }
+                        if (writeBack == null)
+                            throw new InvalidOperationException("Unable to grow a root-level array - no parent reference exists to write the resized array back into");
+                        writeBack(array);
+                        data = array;
                     }
+                    if (array.GetValue(token.Index.Value) == null)
+                        array.SetValue(tokens[i + 1].Index.HasValue ? new List<object>() : new Dictionary<string, object>(), token.Index.Value);
                 }
                 else if (data is IList list) {
                     while (token.Index.Value >= list.Count)
                         list.Add(null);
                     list[token.Index.Value] ??= tokens[i + 1].Index.HasValue ? new List<object>() : new Dictionary<string, object>();
                 }
-                    
+
                 if (data is IEnumerable enumeration) {
-                    data = enumeration.Cast<object>().Skip(token.Index.Value).First();
+                    IList indexable = data as IList;
+                    int elementIndex = token.Index.Value;
+                    data = enumeration.Cast<object>().Skip(elementIndex).First();
+                    writeBack = indexable != null ? v => indexable[elementIndex] = v : null;
                 }
                 else throw new InvalidOperationException("Indexer for non indexing property detected");
             }
             else {
                 if (data is IDictionary dictionary) {
+                    object dictionaryKey;
                     if (ignoreCase) {
                         object key = dictionary.Keys
                                                .Cast<object>()
                                                .FirstOrDefault(k => string.Compare(k?.ToString(), token.Property, StringComparison.InvariantCultureIgnoreCase) == 0);
 
                         if (key == null) {
-                            if (tokens[i + 1].Index.HasValue)
-                                dictionary[token.Property] = data = new List<object>();
-                            else dictionary[token.Property] = data = new Dictionary<string, object>();
+                            dictionaryKey = token.Property;
+                            dictionary[token.Property] = data = tokens[i + 1].Index.HasValue ? new List<object>() : new Dictionary<string, object>();
                         }
                         else {
-                            if (tokens[i + 1].Index.HasValue)
-                                dictionary[key] = data = new List<object>();
-                            else dictionary[key] = data = new Dictionary<string, object>();
+                            dictionaryKey = key;
+                            data = dictionary[key];
                         }
                     }
                     else {
-                        if (!dictionary.Contains(token.Property)) {
-                            if (tokens[i + 1].Index.HasValue)
-                                dictionary[token.Property] = data = new List<object>();
-                            else dictionary[token.Property] = data = new Dictionary<string, object>();
-                        }
+                        dictionaryKey = token.Property;
+                        if (!dictionary.Contains(token.Property))
+                            dictionary[token.Property] = data = tokens[i + 1].Index.HasValue ? new List<object>() : new Dictionary<string, object>();
                         else data = dictionary[token.Property];
                     }
+
+                    IDictionary capturedDictionary = dictionary;
+                    object capturedKey = dictionaryKey;
+                    writeBack = v => capturedDictionary[capturedKey] = v;
                 }
                 else {
                     BindingFlags flags = BindingFlags.Instance | BindingFlags.Public;
                     if(ignoreCase) flags |= BindingFlags.IgnoreCase;
-                    
+
                     PropertyInfo property = data.GetType().GetProperty(token.Property, flags);
                     if (property == null)
                         throw new ArgumentException($"Property '{token.Property}' not found in object");
-                        
+
+                    object owner = data;
                     data = property.GetValue(data);
+                    writeBack = v => property.SetValue(owner, v);
                 }
             }
         }
-            
+
         JPathToken hostToken = tokens.Last();
-                
+
         if (hostToken.Index.HasValue) {
             if (data is Array array) {
-                if (hostToken.Index >= array.Length)
+                if (hostToken.Index >= array.Length) {
                     ResizeArray(ref array, hostToken.Index.Value + 1);
+                    if (writeBack == null)
+                        throw new InvalidOperationException("Unable to grow a root-level array - no parent reference exists to write the resized array back into");
+                    writeBack(array);
+                }
                 array.SetValue(value, hostToken.Index.Value);
             }
             else if (data is IList list) {
@@ -305,8 +317,8 @@ public static class JPath {
                                            .FirstOrDefault(k => string.Compare(k?.ToString(), hostToken.Property, StringComparison.InvariantCultureIgnoreCase) == 0);
 
                     if (key == null)
-                        dictionary[hostToken.Property] = data;
-                    else dictionary[key] = data;
+                        dictionary[hostToken.Property] = value;
+                    else dictionary[key] = value;
                 }
                 else dictionary[hostToken.Property] = value;
             }

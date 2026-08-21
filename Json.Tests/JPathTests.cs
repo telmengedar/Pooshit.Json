@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Json.Tests.Data;
@@ -227,9 +228,135 @@ public class JPathTests {
     [Test, Parallelizable]
     public void SetPropertyIgnoreCase() {
         PropertyData data = new();
-        
+
         JPath.Set(data, "magiccamel", 7, true);
         Assert.AreEqual(7, data.MagicCamel);
+    }
+
+    [Test, Parallelizable]
+    public void SetDictionaryIgnoreCase_ExistingKeyDifferentCase_WritesValue() {
+        Dictionary<string, object> data = new() {
+            ["name"] = "old"
+        };
+
+        JPath.Set(data, "Name", "new-value", true);
+
+        Assert.AreEqual("new-value", data["name"]);
+    }
+
+    [Test, Parallelizable]
+    public void SetDictionaryIgnoreCase_NewKey_WritesValue() {
+        Dictionary<string, object> data = new();
+
+        JPath.Set(data, "Name", "new-value", true);
+
+        Assert.AreEqual("new-value", data["Name"]);
+    }
+
+    [Test, Parallelizable]
+    public void SetDictionaryCaseSensitive_WritesValueLiteral() {
+        Dictionary<string, object> data = new() {
+            ["name"] = "old"
+        };
+
+        JPath.Set(data, "name", "new-value");
+
+        Assert.AreEqual("new-value", data["name"]);
+    }
+
+    [Test, Parallelizable]
+    public void SetDictionaryIgnoreCase_ExistingIntermediateKey_PreservesSiblingData() {
+        Dictionary<string, object> data = new() {
+            ["config"] = new Dictionary<string, object> {
+                ["existing"] = "keep-me"
+            }
+        };
+
+        JPath.Set(data, "Config/added", "val", true);
+
+        Dictionary<string, object> config = (Dictionary<string, object>) data["config"];
+        Assert.AreEqual("keep-me", config["existing"]);
+        Assert.AreEqual("val", config["added"]);
+    }
+
+    [Test, Parallelizable]
+    public void SetDictionaryIgnoreCase_MissingIntermediateKey_CreatesContainer() {
+        Dictionary<string, object> data = new();
+
+        JPath.Set(data, "Config/added", "val", true);
+
+        Dictionary<string, object> config = (Dictionary<string, object>) data["Config"];
+        Assert.AreEqual("val", config["added"]);
+    }
+
+    [Test, Parallelizable]
+    public void SetArrayIndex_InRange_WritesWithoutResize() {
+        object[] data = ["a", "b", "c"];
+
+        JPath.Set(data, "[1]", "z");
+
+        Assert.AreEqual("z", data[1]);
+    }
+
+    [Test, Parallelizable]
+    public void SetArrayIndex_LeafGrowth_PropagatesResizedArrayToParent() {
+        Dictionary<string, object> data = new() {
+            ["items"] = new object[] { "a", "b" }
+        };
+
+        JPath.Set(data, "items[4]", "z");
+
+        object[] items = (object[]) data["items"];
+        Assert.AreEqual(5, items.Length);
+        Assert.AreEqual("z", items[4]);
+    }
+
+    [Test, Parallelizable]
+    public void SetNestedPath_IntermediateArrayGrowth_PropagatesResizedArrayToParent() {
+        Dictionary<string, object> data = new() {
+            ["items"] = new object[] { null, null }
+        };
+
+        JPath.Set(data, "items[3]/name", "bob");
+
+        object[] items = (object[]) data["items"];
+        Assert.AreEqual(4, items.Length);
+        Dictionary<string, object> created = (Dictionary<string, object>) items[3];
+        Assert.AreEqual("bob", created["name"]);
+    }
+
+    [Test, Parallelizable]
+    public void SetNestedPath_ExistingNullArrayElementInRange_CreatesContainer() {
+        Dictionary<string, object> data = new() {
+            ["items"] = new object[] { null, null, null }
+        };
+
+        JPath.Set(data, "items[1]/name", "carl");
+
+        object[] items = (object[]) data["items"];
+        Dictionary<string, object> created = (Dictionary<string, object>) items[1];
+        Assert.AreEqual("carl", created["name"]);
+    }
+
+    [Test, Parallelizable]
+    [Description("The array being grown has no parent reference to write the resized copy back into, so growth must fail loudly instead of silently discarding the write.")]
+    public void SetArrayIndex_GrowRootArray_ThrowsInvalidOperation() {
+        object[] data = ["a", "b"];
+
+        Assert.Throws<InvalidOperationException>(() => JPath.Set(data, "[5]", "z"));
+    }
+
+    [Test, Parallelizable]
+    public void SetListIndex_GrowsListInPlaceWithoutParentPropagation() {
+        Dictionary<string, object> data = new() {
+            ["items"] = new List<object> { "a", "b" }
+        };
+
+        JPath.Set(data, "items[4]", "z");
+
+        List<object> items = (List<object>) data["items"];
+        Assert.AreEqual(5, items.Count);
+        Assert.AreEqual("z", items[4]);
     }
 
 }
