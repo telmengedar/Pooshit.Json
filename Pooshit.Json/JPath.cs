@@ -226,7 +226,7 @@ public static class JPath {
                     if (token.Index.Value >= array.Length) {
                         ResizeArray(ref array, token.Index.Value + 1);
                         if (writeBack == null)
-                            throw new InvalidOperationException("Unable to grow a root-level array - no parent reference exists to write the resized array back into");
+                            throw new InvalidOperationException("Unable to grow this array - no writable parent reference exists to write the resized array back into");
                         writeBack(array);
                         data = array;
                     }
@@ -285,7 +285,7 @@ public static class JPath {
 
                     object owner = data;
                     data = property.GetValue(data);
-                    writeBack = v => property.SetValue(owner, v);
+                    writeBack = property.CanWrite ? v => property.SetValue(owner, v) : null;
                 }
             }
         }
@@ -297,7 +297,7 @@ public static class JPath {
                 if (hostToken.Index >= array.Length) {
                     ResizeArray(ref array, hostToken.Index.Value + 1);
                     if (writeBack == null)
-                        throw new InvalidOperationException("Unable to grow a root-level array - no parent reference exists to write the resized array back into");
+                        throw new InvalidOperationException("Unable to grow this array - no writable parent reference exists to write the resized array back into");
                     writeBack(array);
                 }
                 array.SetValue(value, hostToken.Index.Value);

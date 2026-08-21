@@ -241,7 +241,7 @@ public class JPathTests {
 
         JPath.Set(data, "Name", "new-value", true);
 
-        Assert.AreEqual("new-value", data["name"]);
+        Assert.That(data["name"], Is.EqualTo("new-value"));
     }
 
     [Test, Parallelizable]
@@ -250,7 +250,7 @@ public class JPathTests {
 
         JPath.Set(data, "Name", "new-value", true);
 
-        Assert.AreEqual("new-value", data["Name"]);
+        Assert.That(data["Name"], Is.EqualTo("new-value"));
     }
 
     [Test, Parallelizable]
@@ -261,7 +261,7 @@ public class JPathTests {
 
         JPath.Set(data, "name", "new-value");
 
-        Assert.AreEqual("new-value", data["name"]);
+        Assert.That(data["name"], Is.EqualTo("new-value"));
     }
 
     [Test, Parallelizable]
@@ -275,8 +275,8 @@ public class JPathTests {
         JPath.Set(data, "Config/added", "val", true);
 
         Dictionary<string, object> config = (Dictionary<string, object>) data["config"];
-        Assert.AreEqual("keep-me", config["existing"]);
-        Assert.AreEqual("val", config["added"]);
+        Assert.That(config["existing"], Is.EqualTo("keep-me"));
+        Assert.That(config["added"], Is.EqualTo("val"));
     }
 
     [Test, Parallelizable]
@@ -286,7 +286,7 @@ public class JPathTests {
         JPath.Set(data, "Config/added", "val", true);
 
         Dictionary<string, object> config = (Dictionary<string, object>) data["Config"];
-        Assert.AreEqual("val", config["added"]);
+        Assert.That(config["added"], Is.EqualTo("val"));
     }
 
     [Test, Parallelizable]
@@ -295,7 +295,7 @@ public class JPathTests {
 
         JPath.Set(data, "[1]", "z");
 
-        Assert.AreEqual("z", data[1]);
+        Assert.That(data[1], Is.EqualTo("z"));
     }
 
     [Test, Parallelizable]
@@ -307,8 +307,8 @@ public class JPathTests {
         JPath.Set(data, "items[4]", "z");
 
         object[] items = (object[]) data["items"];
-        Assert.AreEqual(5, items.Length);
-        Assert.AreEqual("z", items[4]);
+        Assert.That(items.Length, Is.EqualTo(5));
+        Assert.That(items[4], Is.EqualTo("z"));
     }
 
     [Test, Parallelizable]
@@ -320,9 +320,9 @@ public class JPathTests {
         JPath.Set(data, "items[3]/name", "bob");
 
         object[] items = (object[]) data["items"];
-        Assert.AreEqual(4, items.Length);
+        Assert.That(items.Length, Is.EqualTo(4));
         Dictionary<string, object> created = (Dictionary<string, object>) items[3];
-        Assert.AreEqual("bob", created["name"]);
+        Assert.That(created["name"], Is.EqualTo("bob"));
     }
 
     [Test, Parallelizable]
@@ -335,7 +335,7 @@ public class JPathTests {
 
         object[] items = (object[]) data["items"];
         Dictionary<string, object> created = (Dictionary<string, object>) items[1];
-        Assert.AreEqual("carl", created["name"]);
+        Assert.That(created["name"], Is.EqualTo("carl"));
     }
 
     [Test, Parallelizable]
@@ -355,8 +355,59 @@ public class JPathTests {
         JPath.Set(data, "items[4]", "z");
 
         List<object> items = (List<object>) data["items"];
-        Assert.AreEqual(5, items.Count);
-        Assert.AreEqual("z", items[4]);
+        Assert.That(items.Count, Is.EqualTo(5));
+        Assert.That(items[4], Is.EqualTo("z"));
+    }
+
+    [Test, Parallelizable]
+    public void SetNestedPocoProperty_GrowsSettablePropertyArrayAndPropagates() {
+        NestedArrayPropertyData data = new() {
+            Items = ["a", "b"]
+        };
+
+        JPath.Set(data, "Items[4]", "z");
+
+        Assert.That(data.Items.Length, Is.EqualTo(5));
+        Assert.That(data.Items[4], Is.EqualTo("z"));
+    }
+
+    [Test, Parallelizable]
+    [Description("A get-only property has no way to receive a resized array, so growth must fail the same way root-level growth does rather than leaking a reflection ArgumentException.")]
+    public void SetGetOnlyPocoProperty_GrowArray_ThrowsInvalidOperation() {
+        GetOnlyArrayPropertyData data = new();
+
+        Assert.Throws<InvalidOperationException>(() => JPath.Set(data, "Items[4]", "z"));
+    }
+
+    [Test, Parallelizable]
+    public void SetArrayInArray_LeafGrowth_PropagatesThroughIndexWriteBack() {
+        object[] data = [new object[] { "a", "b" }];
+
+        JPath.Set(data, "[0][3]", "z");
+
+        object[] inner = (object[]) data[0];
+        Assert.That(inner.Length, Is.EqualTo(4));
+        Assert.That(inner[3], Is.EqualTo("z"));
+    }
+
+    [Test, Parallelizable]
+    public void SetArrayInArray_IntermediateGrowth_PropagatesThroughIndexWriteBack() {
+        object[] data = [new object[] { null, null }];
+
+        JPath.Set(data, "[0][3]/name", "bob");
+
+        object[] inner = (object[]) data[0];
+        Assert.That(inner.Length, Is.EqualTo(4));
+        Dictionary<string, object> created = (Dictionary<string, object>) inner[3];
+        Assert.That(created["name"], Is.EqualTo("bob"));
+    }
+
+    [Test, Parallelizable]
+    [Description("The intermediate array-growth site carries the same no-parent guard as the leaf site, so a root array must fail loudly there too instead of silently discarding the write.")]
+    public void SetArrayIndexIntermediate_GrowRootArray_ThrowsInvalidOperation() {
+        object[] data = ["a", "b"];
+
+        Assert.Throws<InvalidOperationException>(() => JPath.Set(data, "[3]/name", "x"));
     }
 
 }
