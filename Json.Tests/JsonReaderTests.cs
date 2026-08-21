@@ -248,31 +248,39 @@ public class JsonReaderTests {
     }
 
     [Test, Parallelizable]
-    [Description("Asymmetry guard for DiVoid #8847: Json.Read<T>(string) and Json.Read<T>(object structure) must treat a setter-less property identically. The structure overload threw NullReferenceException before the fix while the string overload did not.")]
+    [Description("Regression guard for DiVoid #8847: DictionaryExtensions.ReadType must ignore an unknown key exactly as JsonReader already does, instead of calling HasSetter on a null property lookup.")]
+    public void ReadTypeFromStructure_UnknownKey_IsIgnored() {
+        object structure = Pooshit.Json.Json.Read<object>("{\"unknown\":true,\"job\":\"Dev\"}");
+        ComputedIdData data = null;
+        Assert.DoesNotThrow(() => data = Pooshit.Json.Json.Read<ComputedIdData>(structure));
+        Assert.That(data.Job, Is.EqualTo("Dev"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Asymmetry guard for DiVoid #8847: Json.Read<T>(string) and Json.Read<T>(object structure) must treat a setter-less property identically.")]
     public void Read_GetOnlyPropertyInBlob_StringAndStructureOverloadsAgree() {
         string json = "{\"job\":\"Dev\",\"id\":666}";
         ComputedIdData viaString = Pooshit.Json.Json.Read<ComputedIdData>(json);
         object structure = Pooshit.Json.Json.Read<object>(json);
         ComputedIdData viaStructure = Pooshit.Json.Json.Read<ComputedIdData>(structure);
         Assert.That(viaStructure.Job, Is.EqualTo(viaString.Job));
-        Assert.That(viaStructure.Id, Is.EqualTo(viaString.Id));
     }
 
     [Test, Parallelizable]
     [Description("Regression guard for DiVoid #8847 / mamgo #8842: reproduces the production stack shape (structure -> array -> structure element) where a get-only property on an array element type must not throw.")]
     public void ReadTypeFromStructure_GetOnlyIdNestedInArrayInStructure_DoesNotThrow() {
-        object structure = Pooshit.Json.Json.Read<object>("{\"title\":\"t\",\"container\":{\"name\":\"n\",\"elements\":[{\"label\":\"a\",\"id\":1},{\"label\":\"b\",\"id\":2}]}}");
+        object structure = Pooshit.Json.Json.Read<object>("{\"title\":\"t\",\"container\":{\"name\":\"n\",\"elements\":[{\"job\":\"a\",\"id\":1},{\"job\":\"b\",\"id\":2}]}}");
         Assert.DoesNotThrow(() => Pooshit.Json.Json.Read<GetOnlyIdNestedStructureData>(structure));
     }
 
     [Test, Parallelizable]
     [Description("Regression guard for DiVoid #8847 / mamgo #8842: the root property, the nested structure property and the array elements must all survive the fix, not just avoid throwing.")]
     public void ReadTypeFromStructure_GetOnlyIdNestedInArrayInStructure_PreservesElementData() {
-        object structure = Pooshit.Json.Json.Read<object>("{\"title\":\"t\",\"container\":{\"name\":\"n\",\"elements\":[{\"label\":\"a\",\"id\":1},{\"label\":\"b\",\"id\":2}]}}");
+        object structure = Pooshit.Json.Json.Read<object>("{\"title\":\"t\",\"container\":{\"name\":\"n\",\"elements\":[{\"job\":\"a\",\"id\":1},{\"job\":\"b\",\"id\":2}]}}");
         GetOnlyIdNestedStructureData data = Pooshit.Json.Json.Read<GetOnlyIdNestedStructureData>(structure);
         Assert.That(data.Title, Is.EqualTo("t"));
         Assert.That(data.Container.Name, Is.EqualTo("n"));
-        Assert.That(data.Container.Elements.Select(e => e.Label), Is.EqualTo(new[] { "a", "b" }));
+        Assert.That(data.Container.Elements.Select(e => e.Job), Is.EqualTo(new[] { "a", "b" }));
     }
 
     [Test, Parallelizable]

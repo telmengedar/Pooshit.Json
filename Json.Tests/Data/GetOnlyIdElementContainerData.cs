@@ -6,5 +6,5 @@ namespace Json.Tests.Data;
 public class GetOnlyIdElementContainerData {
     public string Name { get; set; }
 
-    public GetOnlyIdArrayElementData[] Elements { get; set; }
+    public ComputedIdData[] Elements { get; set; }
 }
